@@ -13,7 +13,7 @@
         .thai-font { font-family: 'Sarabun', sans-serif; }
         .toss-dark { background-color: #1e1e1e; color: #f2f4f6; }
         .toss-input { background-color: #2c2c2c; border: none; color: white; transition: all 0.2s; }
-        .toss-input:focus { background-color: #333; ring: 2px solid #3b82f6; }
+        .toss-input:focus { background-color: #333; outline: 2px solid #3b82f6; outline-offset: 2px; }
         .toss-button { background-color: #3182f6; transition: all 0.2s; }
         .toss-button:active { transform: scale(0.96); opacity: 0.9; }
 
@@ -47,9 +47,85 @@
 
         /* 설정 모달 */
         .modal-overlay { background-color: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+
+        /* 모바일 스타일 (기본) */
+        .mobile-only { display: block; }
+        .desktop-only { display: none; }
+
+        /* PC 스타일 */
+        @media (min-width: 768px) {
+            body.is-desktop .container-wrapper {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            body.is-desktop .mobile-only { display: none; }
+            body.is-desktop .desktop-only { display: block; }
+            body.is-desktop header {
+                padding: 1.5rem;
+            }
+            body.is-desktop .lang-btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            body.is-desktop #input-text {
+                min-height: 150px;
+                font-size: 16px;
+            }
+            body.is-desktop #output-text {
+                font-size: 1.75rem;
+            }
+            body.is-desktop .toss-button {
+                width: 56px;
+                height: 56px;
+            }
+            body.is-desktop .toss-button:hover {
+                background-color: #2563eb;
+                transform: scale(1.05);
+            }
+            body.is-desktop .lang-btn:hover {
+                background-color: #3b82f6;
+                color: white;
+            }
+        }
+
+        /* 모바일 스타일 */
+        @media (max-width: 767px) {
+            body.is-mobile .container-wrapper {
+                max-width: 100%;
+            }
+            body.is-mobile header {
+                padding: 1rem;
+            }
+            body.is-mobile .lang-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            body.is-mobile #input-text {
+                min-height: 120px;
+                font-size: 16px;
+            }
+            body.is-mobile #output-text {
+                font-size: 1.5rem;
+            }
+            body.is-mobile .toss-button {
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        /* 터치 디바이스 스타일 */
+        @media (hover: none) and (pointer: coarse) {
+            .toss-button:active {
+                transform: scale(0.95);
+            }
+            .lang-btn:active {
+                transform: scale(0.98);
+            }
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col max-w-md mx-auto overflow-hidden bg-black">
+<body class="h-screen flex flex-col overflow-hidden bg-black">
+    <div class="container-wrapper h-full flex flex-col">
 
     <!-- 1. Header & Global UI Switcher -->
     <header class="toss-dark p-4 pb-2 shrink-0 rounded-b-2xl shadow-lg z-10">
@@ -152,6 +228,7 @@
         </div>
 
     </main>
+    </div>
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
@@ -208,11 +285,57 @@
             tone: 'polite',
             lastResult: '',
             lastLang: '',
-            apiKey: defaultApiKey
+            apiKey: defaultApiKey,
+            isMobile: false,
+            isDesktop: false
         };
+
+        // --- DEVICE DETECTION ---
+        function detectDevice() {
+            const width = window.innerWidth;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            // 화면 크기와 디바이스 타입을 종합적으로 판단
+            state.isMobile = (width < 768) || (isMobileDevice && width < 1024);
+            state.isDesktop = width >= 768 && !isMobileDevice;
+
+            // body에 클래스 추가/제거
+            document.body.classList.remove('is-mobile', 'is-desktop');
+            if (state.isMobile) {
+                document.body.classList.add('is-mobile');
+            } else if (state.isDesktop) {
+                document.body.classList.add('is-desktop');
+            }
+
+            // 컨테이너 너비 조정
+            const container = document.querySelector('.container-wrapper');
+            if (container) {
+                if (state.isMobile) {
+                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl');
+                    container.classList.add('max-w-full');
+                } else {
+                    container.classList.remove('max-w-full');
+                    container.classList.add('max-w-md');
+                }
+            }
+        }
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
+            // 디바이스 감지
+            detectDevice();
+            
+            // 화면 크기 변경 시 재감지
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    detectDevice();
+                }, 150);
+            });
+
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) state.apiKey = savedKey;
 
