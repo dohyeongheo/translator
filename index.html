@@ -1,21 +1,55 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 뉘앙스 통역기 V11 (Simple)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Sarabun:wght@400;700&display=swap"
+        rel="stylesheet">
 
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #121212; color: white; -webkit-tap-highlight-color: transparent; }
-        .thai-font { font-family: 'Sarabun', sans-serif; }
-        .toss-dark { background-color: #1e1e1e; color: #f2f4f6; }
-        .toss-input { background-color: #2c2c2c; border: none; color: white; transition: all 0.2s; }
-        .toss-input:focus { background-color: #333; outline: 2px solid #3b82f6; outline-offset: 2px; }
-        .toss-button { background-color: #3182f6; transition: all 0.2s; }
-        .toss-button:active { transform: scale(0.96); opacity: 0.9; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #121212;
+            color: white;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .thai-font {
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        .toss-dark {
+            background-color: #1e1e1e;
+            color: #f2f4f6;
+        }
+
+        .toss-input {
+            background-color: #2c2c2c;
+            border: none;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .toss-input:focus {
+            background-color: #333;
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .toss-button {
+            background-color: #3182f6;
+            transition: all 0.2s;
+        }
+
+        .toss-button:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
 
         /* 언어 선택 버튼 */
         .lang-btn {
@@ -27,6 +61,7 @@
             color: #a1a1aa;
             transition: all 0.2s;
         }
+
         .lang-btn.active {
             background-color: #3b82f6;
             color: white;
@@ -35,22 +70,50 @@
 
         /* UI 언어 스위처 */
         .ui-lang-btn {
-            opacity: 0.5; filter: grayscale(1); transition: all 0.2s;
+            opacity: 0.5;
+            filter: grayscale(1);
+            transition: all 0.2s;
         }
+
         .ui-lang-btn.active {
-            opacity: 1; filter: grayscale(0); transform: scale(1.1);
+            opacity: 1;
+            filter: grayscale(0);
+            transform: scale(1.1);
         }
 
         /* 펄스 애니메이션 */
-        .pulse-text { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .pulse-text {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
 
         /* 설정 모달 */
-        .modal-overlay { background-color: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
 
         /* 모바일 스타일 (기본) */
-        .mobile-only { display: block; }
-        .desktop-only { display: none; }
+        .mobile-only {
+            display: block;
+        }
+
+        .desktop-only {
+            display: none;
+        }
 
         /* PC 스타일 */
         @media (min-width: 768px) {
@@ -58,30 +121,43 @@
                 max-width: 600px;
                 margin: 0 auto;
             }
-            body.is-desktop .mobile-only { display: none; }
-            body.is-desktop .desktop-only { display: block; }
+
+            body.is-desktop .mobile-only {
+                display: none;
+            }
+
+            body.is-desktop .desktop-only {
+                display: block;
+            }
+
             body.is-desktop header {
                 padding: 1.5rem;
             }
+
             body.is-desktop .lang-btn {
                 padding: 8px 14px;
                 font-size: 13px;
             }
+
             body.is-desktop #input-text {
                 min-height: 150px;
                 font-size: 16px;
             }
+
             body.is-desktop #output-text {
                 font-size: 1.75rem;
             }
+
             body.is-desktop .toss-button {
                 width: 56px;
                 height: 56px;
             }
+
             body.is-desktop .toss-button:hover {
                 background-color: #2563eb;
                 transform: scale(1.05);
             }
+
             body.is-desktop .lang-btn:hover {
                 background-color: #3b82f6;
                 color: white;
@@ -93,20 +169,25 @@
             body.is-mobile .container-wrapper {
                 max-width: 100%;
             }
+
             body.is-mobile header {
                 padding: 1rem;
             }
+
             body.is-mobile .lang-btn {
                 padding: 6px 10px;
                 font-size: 11px;
             }
+
             body.is-mobile #input-text {
                 min-height: 120px;
                 font-size: 16px;
             }
+
             body.is-mobile #output-text {
                 font-size: 1.5rem;
             }
+
             body.is-mobile .toss-button {
                 width: 48px;
                 height: 48px;
@@ -118,135 +199,159 @@
             .toss-button:active {
                 transform: scale(0.95);
             }
+
             .lang-btn:active {
                 transform: scale(0.98);
             }
         }
     </style>
 </head>
+
 <body class="h-screen flex flex-col overflow-hidden bg-black">
     <div class="container-wrapper h-full flex flex-col">
 
-    <!-- 1. Header & Global UI Switcher -->
-    <header class="toss-dark p-4 pb-2 shrink-0 rounded-b-2xl shadow-lg z-10">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-black text-blue-400 flex items-center gap-2">
-                Nuance V11 <span class="text-[10px] bg-yellow-600 text-white px-2 py-0.5 rounded-full">LITE</span>
-            </h1>
-            <div class="flex gap-2">
-                <!-- Settings Button -->
-                <button onclick="toggleSettings()" class="bg-black/30 p-2 rounded-full text-gray-400 hover:text-white transition">
-                    <i class="fas fa-cog"></i>
+        <!-- 1. Header & Global UI Switcher -->
+        <header class="toss-dark p-4 pb-2 shrink-0 rounded-b-2xl shadow-lg z-10">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-black text-blue-400 flex items-center gap-2">
+                    Nuance V11 <span class="text-[10px] bg-yellow-600 text-white px-2 py-0.5 rounded-full">LITE</span>
+                </h1>
+                <div class="flex gap-2">
+                    <!-- Settings Button -->
+                    <button onclick="toggleSettings()"
+                        class="bg-black/30 p-2 rounded-full text-gray-400 hover:text-white transition">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <!-- UI Language Switcher -->
+                    <div class="flex gap-2 bg-black/30 p-1.5 rounded-full">
+                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg">🇰🇷</button>
+                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg">🇹🇭</button>
+                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg">🇺🇸</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trans Language Selector -->
+            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2">
+                <div class="flex gap-1" id="source-lang-group">
+                    <button data-lang="auto" class="lang-btn active" data-i18n="auto">자동</button>
+                    <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
+                    <button data-lang="th" class="lang-btn" data-i18n="th">태국어</button>
+                    <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
+                </div>
+                <i class="fas fa-arrow-right text-gray-600 text-xs mx-1"></i>
+                <div class="flex gap-1" id="target-lang-group">
+                    <button data-lang="th" class="lang-btn active" data-i18n="th">태국어</button>
+                    <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
+                    <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 2. Main Content -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+
+            <!-- Persona Settings (Simplified) -->
+            <div class="toss-dark p-4 rounded-2xl border border-gray-800 space-y-3">
+                <!-- Nuance (뉘앙스) -->
+                <div>
+                    <h2
+                        class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fas fa-sliders text-purple-400"></i> <span data-i18n="nuance">뉘앙스 (Tone)</span>
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2" id="nuance-group">
+                        <button data-tone="polite"
+                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white active border-2 border-transparent transition-all">
+                            🙏 <span data-i18n="polite">예의 바르게</span>
+                        </button>
+                        <button data-tone="normal"
+                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
+                            😐 <span data-i18n="normal">보통</span>
+                        </button>
+                        <button data-tone="casual"
+                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
+                            ☕ <span data-i18n="casual">편안하게</span>
+                        </button>
+                        <button data-tone="playful"
+                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
+                            😜 <span data-i18n="playful">장난스럽게</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="relative">
+                <textarea id="input-text"
+                    class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
+                    placeholder="여기에 내용을 입력하세요..."></textarea>
+                <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
+                    <i class="fas fa-times-circle text-xl"></i>
                 </button>
-                <!-- UI Language Switcher -->
-                <div class="flex gap-2 bg-black/30 p-1.5 rounded-full">
-                    <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg">🇰🇷</button>
-                    <button onclick="setUILang('th')" class="ui-lang-btn text-lg">🇹🇭</button>
-                    <button onclick="setUILang('en')" class="ui-lang-btn text-lg">🇺🇸</button>
-                </div>
+                <button onclick="executeTranslation()"
+                    class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-paper-plane text-lg"></i>
+                </button>
             </div>
-        </div>
 
-        <!-- Trans Language Selector -->
-        <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2">
-            <div class="flex gap-1" id="source-lang-group">
-                <button data-lang="auto" class="lang-btn active" data-i18n="auto">자동</button>
-                <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
-                <button data-lang="th" class="lang-btn" data-i18n="th">태국어</button>
-                <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
-            </div>
-            <i class="fas fa-arrow-right text-gray-600 text-xs mx-1"></i>
-            <div class="flex gap-1" id="target-lang-group">
-                <button data-lang="th" class="lang-btn active" data-i18n="th">태국어</button>
-                <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
-                <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
-            </div>
-        </div>
-    </header>
-
-    <!-- 2. Main Content -->
-    <main class="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
-
-        <!-- Persona Settings (Simplified) -->
-        <div class="toss-dark p-4 rounded-2xl border border-gray-800 space-y-3">
-            <!-- Nuance (뉘앙스) -->
-            <div>
-                <h2 class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
-                    <i class="fas fa-sliders text-purple-400"></i> <span data-i18n="nuance">뉘앙스 (Tone)</span>
-                </h2>
-                <div class="grid grid-cols-2 gap-2" id="nuance-group">
-                    <button data-tone="polite" class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white active border-2 border-transparent transition-all">
-                        🙏 <span data-i18n="polite">예의 바르게</span>
-                    </button>
-                    <button data-tone="normal" class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                        😐 <span data-i18n="normal">보통</span>
-                    </button>
-                    <button data-tone="casual" class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                        ☕ <span data-i18n="casual">편안하게</span>
-                    </button>
-                    <button data-tone="playful" class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                        😜 <span data-i18n="playful">장난스럽게</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Input Area -->
-        <div class="relative">
-            <textarea id="input-text" class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner" placeholder="여기에 내용을 입력하세요..."></textarea>
-            <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
-                <i class="fas fa-times-circle text-xl"></i>
-            </button>
-            <button onclick="executeTranslation()" class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <i class="fas fa-paper-plane text-lg"></i>
-            </button>
-        </div>
-
-        <!-- Result Area -->
-        <div id="result-card" class="hidden animate-pulse">
-            <div class="toss-dark p-5 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center mb-3">
-                    <span id="detected-lang-label" class="text-[10px] font-bold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">DETECTED</span>
-                    <div class="flex gap-3">
-                        <button onclick="copyResult()" class="text-gray-500 hover:text-white"><i class="far fa-copy"></i></button>
-                        <button onclick="playTTS(state.lastResult, state.lastLang)" class="text-blue-400 hover:text-blue-300"><i id="tts-icon" class="fas fa-volume-high text-xl"></i></button>
+            <!-- Result Area -->
+            <div id="result-card" class="hidden animate-pulse">
+                <div class="toss-dark p-5 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <span id="detected-lang-label"
+                            class="text-[10px] font-bold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">DETECTED</span>
+                        <div class="flex gap-3">
+                            <button onclick="copyResult()" class="text-gray-500 hover:text-white"><i
+                                    class="far fa-copy"></i></button>
+                            <button onclick="playTTS(state.lastResult, state.lastLang)"
+                                class="text-blue-400 hover:text-blue-300"><i id="tts-icon"
+                                    class="fas fa-volume-high text-xl"></i></button>
+                        </div>
                     </div>
-                </div>
-                <p id="output-text" class="text-2xl font-bold text-white leading-relaxed thai-font break-words"></p>
+                    <p id="output-text" class="text-2xl font-bold text-white leading-relaxed thai-font break-words"></p>
 
-                <!-- Error Log -->
-                <div id="error-log" class="hidden mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-xs text-red-300 font-mono break-all"></div>
+                    <!-- Error Log -->
+                    <div id="error-log"
+                        class="hidden mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-xs text-red-300 font-mono break-all">
+                    </div>
 
-                <!-- Loading -->
-                <div id="loading-spinner" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                    <div class="flex flex-col items-center">
-                        <i class="fas fa-circle-notch fa-spin text-3xl text-blue-500 mb-2"></i>
-                        <span class="text-xs text-blue-200 font-bold pulse-text" data-i18n="translating">AI 번역 중...</span>
+                    <!-- Loading -->
+                    <div id="loading-spinner"
+                        class="hidden absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-circle-notch fa-spin text-3xl text-blue-500 mb-2"></i>
+                            <span class="text-xs text-blue-200 font-bold pulse-text" data-i18n="translating">AI 번역
+                                중...</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </main>
+        </main>
     </div>
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="toss-dark w-full max-w-sm p-6 rounded-2xl shadow-2xl border border-gray-700 animate-in zoom-in-95 duration-200">
+        <div
+            class="toss-dark w-full max-w-sm p-6 rounded-2xl shadow-2xl border border-gray-700 animate-in zoom-in-95 duration-200">
             <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
                 <i class="fas fa-key text-yellow-500"></i> API Settings
             </h2>
             <div class="mb-4">
                 <label class="text-xs text-gray-400 font-bold mb-1 block">Google Gemini API Key</label>
-                <input type="password" id="api-key-input" class="w-full p-3 rounded-xl toss-input text-sm border border-gray-700 focus:border-blue-500" placeholder="Paste your API key here...">
+                <input type="password" id="api-key-input"
+                    class="w-full p-3 rounded-xl toss-input text-sm border border-gray-700 focus:border-blue-500"
+                    placeholder="Paste your API key here...">
                 <p class="text-[10px] text-gray-500 mt-2">
                     * 401 오류 시 본인의 키를 입력하세요.<br>
                     * 키는 브라우저에만 저장됩니다.
                 </p>
             </div>
             <div class="flex gap-2">
-                <button onclick="toggleSettings()" class="flex-1 p-3 rounded-xl bg-gray-700 text-gray-300 font-bold text-xs hover:bg-gray-600">취소</button>
-                <button onclick="saveApiKey()" class="flex-1 p-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500">저장</button>
+                <button onclick="toggleSettings()"
+                    class="flex-1 p-3 rounded-xl bg-gray-700 text-gray-300 font-bold text-xs hover:bg-gray-600">취소</button>
+                <button onclick="saveApiKey()"
+                    class="flex-1 p-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500">저장</button>
             </div>
         </div>
     </div>
@@ -296,7 +401,7 @@
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             const userAgent = navigator.userAgent.toLowerCase();
             const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-            
+
             // 화면 크기와 디바이스 타입을 종합적으로 판단
             state.isMobile = (width < 768) || (isMobileDevice && width < 1024);
             state.isDesktop = width >= 768 && !isMobileDevice;
@@ -326,7 +431,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 디바이스 감지
             detectDevice();
-            
+
             // 화면 크기 변경 시 재감지
             let resizeTimer;
             window.addEventListener('resize', () => {
@@ -378,9 +483,9 @@
             state.uiLang = lang;
             document.querySelectorAll('.ui-lang-btn').forEach(btn => btn.classList.remove('active'));
             const btns = document.querySelectorAll('.ui-lang-btn');
-            if(lang === 'ko') btns[0].classList.add('active');
-            if(lang === 'th') btns[1].classList.add('active');
-            if(lang === 'en') btns[2].classList.add('active');
+            if (lang === 'ko') btns[0].classList.add('active');
+            if (lang === 'th') btns[1].classList.add('active');
+            if (lang === 'en') btns[2].classList.add('active');
 
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.dataset.i18n;
@@ -407,7 +512,7 @@
             const container = document.getElementById(groupId);
             const selector = `[data-tone="${val}"]`;
             const btn = container.querySelector(selector);
-            if(btn) btn.classList.add(...classes, 'active');
+            if (btn) btn.classList.add(...classes, 'active');
         }
 
         function clearInput() {
@@ -527,4 +632,5 @@
 
     </script>
 </body>
+
 </html>
