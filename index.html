@@ -115,139 +115,139 @@
             display: none;
         }
 
-        /* PC 스타일 */
+        /* PC 스타일 - 미디어 쿼리로 직접 적용 */
         @media (min-width: 768px) {
-            body.is-desktop .container-wrapper {
-                max-width: 1400px;
+            .container-wrapper {
+                max-width: 1400px !important;
                 margin: 0 auto;
                 padding: 0 2rem;
             }
 
-            body.is-desktop .mobile-only {
+            .mobile-only {
                 display: none;
             }
 
-            body.is-desktop .desktop-only {
+            .desktop-only {
                 display: block;
             }
 
-            body.is-desktop header {
-                padding: 2rem 2.5rem;
+            header {
+                padding: 2rem 2.5rem !important;
                 border-radius: 0 0 1.5rem 1.5rem;
             }
 
-            body.is-desktop .lang-btn {
-                padding: 10px 18px;
-                font-size: 14px;
+            .lang-btn {
+                padding: 10px 18px !important;
+                font-size: 14px !important;
                 border-radius: 10px;
             }
 
-            body.is-desktop #input-text {
-                min-height: 200px;
-                font-size: 18px;
-                padding: 1.5rem;
+            #input-text {
+                min-height: 200px !important;
+                font-size: 18px !important;
+                padding: 1.5rem !important;
             }
 
-            body.is-desktop #output-text {
-                font-size: 2rem;
+            #output-text {
+                font-size: 2rem !important;
                 line-height: 1.6;
             }
 
-            body.is-desktop .toss-button {
-                width: 64px;
-                height: 64px;
-                font-size: 1.25rem;
+            .toss-button {
+                width: 64px !important;
+                height: 64px !important;
+                font-size: 1.25rem !important;
             }
 
-            body.is-desktop .toss-button:hover {
+            .toss-button:hover {
                 background-color: #2563eb;
                 transform: scale(1.05);
             }
 
-            body.is-desktop .lang-btn:hover {
+            .lang-btn:hover {
                 background-color: #3b82f6;
                 color: white;
             }
 
-            body.is-desktop main {
-                padding: 2rem;
+            main {
+                padding: 2rem !important;
                 max-width: 100%;
             }
 
-            body.is-desktop .toss-dark {
-                padding: 2rem;
+            .toss-dark {
+                padding: 2rem !important;
             }
 
-            body.is-desktop h1 {
-                font-size: 1.75rem;
+            h1 {
+                font-size: 1.75rem !important;
             }
 
-            body.is-desktop #result-card .toss-dark {
-                padding: 2.5rem;
+            #result-card .toss-dark {
+                padding: 2.5rem !important;
             }
 
-            body.is-desktop #nuance-group {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 1rem;
+            #nuance-group {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 1rem !important;
             }
 
-            body.is-desktop #nuance-group button {
-                padding: 1.25rem;
-                font-size: 14px;
+            #nuance-group button {
+                padding: 1.25rem !important;
+                font-size: 14px !important;
             }
         }
 
         /* 대형 화면 스타일 (1920px 이상) */
         @media (min-width: 1920px) {
-            body.is-desktop .container-wrapper {
-                max-width: 1600px;
-                padding: 0 3rem;
+            .container-wrapper {
+                max-width: 1600px !important;
+                padding: 0 3rem !important;
             }
 
-            body.is-desktop header {
-                padding: 2.5rem 3rem;
+            header {
+                padding: 2.5rem 3rem !important;
             }
 
-            body.is-desktop main {
-                padding: 3rem;
+            main {
+                padding: 3rem !important;
             }
 
-            body.is-desktop #input-text {
-                min-height: 250px;
-                font-size: 20px;
-                padding: 2rem;
+            #input-text {
+                min-height: 250px !important;
+                font-size: 20px !important;
+                padding: 2rem !important;
             }
 
-            body.is-desktop #output-text {
-                font-size: 2.25rem;
+            #output-text {
+                font-size: 2.25rem !important;
             }
 
-            body.is-desktop .lang-btn {
-                padding: 12px 22px;
-                font-size: 15px;
+            .lang-btn {
+                padding: 12px 22px !important;
+                font-size: 15px !important;
             }
 
-            body.is-desktop .toss-button {
-                width: 72px;
-                height: 72px;
-                font-size: 1.5rem;
+            .toss-button {
+                width: 72px !important;
+                height: 72px !important;
+                font-size: 1.5rem !important;
             }
 
-            body.is-desktop h1 {
-                font-size: 2rem;
+            h1 {
+                font-size: 2rem !important;
             }
 
-            body.is-desktop .toss-dark {
-                padding: 2.5rem;
+            .toss-dark {
+                padding: 2.5rem !important;
             }
 
-            body.is-desktop #nuance-group {
-                gap: 1.5rem;
+            #nuance-group {
+                gap: 1.5rem !important;
             }
 
-            body.is-desktop #nuance-group button {
-                padding: 1.5rem;
-                font-size: 15px;
+            #nuance-group button {
+                padding: 1.5rem !important;
+                font-size: 15px !important;
             }
         }
 
@@ -508,15 +508,15 @@
                 document.body.classList.add('is-desktop');
             }
 
-            // 컨테이너 너비 조정
+            // 컨테이너 너비 조정 (CSS 미디어 쿼리가 처리하므로 클래스만 제거)
             const container = document.querySelector('.container-wrapper');
             if (container) {
                 if (state.isMobile) {
-                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl');
+                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
                     container.classList.add('max-w-full');
                 } else {
-                    container.classList.remove('max-w-full');
-                    container.classList.add('max-w-md');
+                    // PC에서는 CSS 미디어 쿼리가 max-width를 설정하므로 Tailwind 클래스 제거
+                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
                 }
             }
         }
