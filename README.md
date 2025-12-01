@@ -42,6 +42,42 @@
 - Chrome, Edge, Safari, Firefox 등 최신 브라우저 지원
 - 모바일 브라우저 지원
 
+## 배포 방법
+
+### GitHub Pages 배포
+
+1. **GitHub에 저장소 생성**
+   - GitHub에서 새 저장소를 생성합니다
+   - 저장소 이름을 입력하고 생성합니다
+
+2. **원격 저장소 연결 및 푸시**
+   ```bash
+   git remote add origin https://github.com/사용자명/저장소명.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+3. **GitHub Pages 활성화**
+   - 저장소의 `Settings` → `Pages`로 이동
+   - Source를 `GitHub Actions`로 선택
+   - 자동으로 배포가 시작됩니다
+
+4. **배포 완료**
+   - 몇 분 후 `https://사용자명.github.io/저장소명/`에서 접속 가능합니다
+   - GitHub Actions에서 배포 상태를 확인할 수 있습니다
+
+### 로컬 테스트
+
+```bash
+# Python을 사용한 간단한 로컬 서버
+python -m http.server 8000
+
+# 또는 Node.js의 http-server 사용
+npx http-server
+```
+
+브라우저에서 `http://localhost:8000`으로 접속하여 테스트할 수 있습니다.
+
 ## 라이선스
 
 이 프로젝트는 개인 사용 목적으로 제작되었습니다.
