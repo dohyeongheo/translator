@@ -190,6 +190,13 @@
                 grid-template-columns: repeat(4, 1fr) !important;
                 gap: 1rem !important;
             }
+            
+            /* 모바일에서만 2열 유지 */
+            @media (max-width: 767px) {
+                #nuance-group {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+            }
 
             #nuance-group button {
                 padding: 1.25rem !important;
@@ -346,7 +353,7 @@
                         class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
                         <i class="fas fa-sliders text-purple-400"></i> <span data-i18n="nuance">뉘앙스 (Tone)</span>
                     </h2>
-                    <div class="grid grid-cols-2 gap-2" id="nuance-group">
+                    <div class="grid gap-2" id="nuance-group" style="grid-template-columns: repeat(2, 1fr);">
                         <button data-tone="polite"
                             class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white active border-2 border-transparent transition-all">
                             🙏 <span data-i18n="polite">예의 바르게</span>
@@ -517,7 +524,18 @@
                 } else {
                     // PC에서는 CSS 미디어 쿼리가 max-width를 설정하므로 Tailwind 클래스 제거
                     container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
+                    // PC 레이아웃 강제 적용
+                    container.style.maxWidth = '';
                 }
+            }
+            
+            // 디버깅: PC 레이아웃 확인
+            if (state.isDesktop) {
+                console.log('PC 레이아웃 적용됨:', {
+                    width: width,
+                    containerWidth: container ? container.offsetWidth : 'N/A',
+                    isDesktop: state.isDesktop
+                });
             }
         }
 
