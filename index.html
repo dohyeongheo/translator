@@ -401,16 +401,23 @@
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             const userAgent = navigator.userAgent.toLowerCase();
             const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            // 화면 크기를 우선시하여 판단 (큰 화면은 항상 desktop으로 처리)
+            // width >= 768: desktop 스타일 적용 (태블릿/큰 화면 모바일 포함)
+            // width < 768: mobile 스타일 적용
+            if (width >= 768) {
+                state.isMobile = false;
+                state.isDesktop = true;
+            } else {
+                state.isMobile = true;
+                state.isDesktop = false;
+            }
 
-            // 화면 크기와 디바이스 타입을 종합적으로 판단
-            state.isMobile = (width < 768) || (isMobileDevice && width < 1024);
-            state.isDesktop = width >= 768 && !isMobileDevice;
-
-            // body에 클래스 추가/제거
+            // body에 클래스 추가/제거 (항상 하나는 추가되도록 보장)
             document.body.classList.remove('is-mobile', 'is-desktop');
             if (state.isMobile) {
                 document.body.classList.add('is-mobile');
-            } else if (state.isDesktop) {
+            } else {
                 document.body.classList.add('is-desktop');
             }
 
