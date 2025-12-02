@@ -386,44 +386,48 @@
 
             <!-- Input Area -->
             <div class="relative">
-                <textarea id="input-text"
-                    class="w-full h-32 p-5 pl-14 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
-                    placeholder="여기에 내용을 입력하세요..."></textarea>
-                
-                <!-- 음성 입력 버튼 -->
-                <button onclick="startVoiceInput()" 
-                        id="voice-input-btn"
-                        class="absolute top-3 left-3 text-gray-600 hover:text-blue-400 p-2 transition-colors"
+                <!-- 버튼 그룹 (입력창 위에 배치) -->
+                <div class="absolute top-2 left-2 flex gap-2 z-10">
+                    <!-- 음성 입력 버튼 -->
+                    <button onclick="startVoiceInput()" id="voice-input-btn"
+                        class="bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-blue-400 p-2 rounded-lg transition-colors backdrop-blur-sm"
                         title="음성 입력">
-                    <i class="fas fa-microphone text-xl"></i>
-                </button>
-                
-                <!-- 이미지 업로드 버튼 -->
-                <button onclick="document.getElementById('image-input').click()" 
-                        class="absolute top-3 left-12 text-gray-600 hover:text-green-400 p-2 transition-colors"
+                        <i class="fas fa-microphone text-sm"></i>
+                    </button>
+
+                    <!-- 이미지 업로드 버튼 -->
+                    <button onclick="document.getElementById('image-input').click()"
+                        class="bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-green-400 p-2 rounded-lg transition-colors backdrop-blur-sm"
                         title="이미지에서 텍스트 추출">
-                    <i class="fas fa-image text-xl"></i>
-                </button>
-                <input type="file" id="image-input" accept="image/*" 
-                       class="hidden" onchange="handleImageUpload(event)">
+                        <i class="fas fa-image text-sm"></i>
+                    </button>
+                </div>
+                <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                 
+                <textarea id="input-text"
+                    class="w-full h-32 p-5 pt-12 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
+                    placeholder="여기에 내용을 입력하세요..."></textarea>
+
                 <!-- 음성 입력 상태 표시 -->
-                <div id="voice-status" class="hidden absolute top-12 left-3 text-xs text-blue-400 flex items-center gap-1">
+                <div id="voice-status"
+                    class="hidden absolute top-12 left-2 text-xs text-blue-400 flex items-center gap-1 bg-gray-800/80 px-2 py-1 rounded backdrop-blur-sm">
                     <i class="fas fa-circle animate-pulse"></i> <span>듣는 중...</span>
                 </div>
-                
+
                 <!-- OCR 진행 상태 -->
-                <div id="ocr-progress" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
+                <div id="ocr-progress"
+                    class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
                     <div class="text-center text-white">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p class="text-sm mb-2">이미지에서 텍스트 추출 중...</p>
                         <div class="w-64 bg-gray-700 rounded-full h-2">
-                            <div id="ocr-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                            <div id="ocr-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all"
+                                style="width: 0%"></div>
                         </div>
                         <p id="ocr-progress-text" class="text-xs text-gray-400 mt-2">0%</p>
                     </div>
                 </div>
-                
+
                 <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
                     <i class="fas fa-times-circle text-xl"></i>
                 </button>
@@ -777,12 +781,14 @@
                 3. If input is Thai/English -> Translate to Korean.
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
-                6. Extract as many important words/expressions as possible from the translated text and provide Korean meanings.
+                6. Extract as many important words/expressions as possible from the TRANSLATED TEXT (not the input text) and provide Korean meanings.
+                   - IMPORTANT: Extract words from the translatedText, NOT from the input text
                    - For short texts (under 50 words): extract at least 5-8 words/expressions
                    - For medium texts (50-200 words): extract at least 10-15 words/expressions
                    - For long texts (over 200 words): extract at least 15-20 words/expressions or more
                    - Include all significant nouns, verbs, adjectives, phrases, and idiomatic expressions
                 7. If source language is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
+                   - If target language is Thai (th), add "pronunciation" field for each Thai word in the translated text.
 
                 Output JSON ONLY: {
                     "detectedSource": "LANG_CODE",
@@ -798,12 +804,14 @@
                 }
 
                 Note:
+                - wordGuide should contain words/expressions from the TRANSLATED TEXT, NOT from the input text.
                 - wordGuide should contain as many important words/expressions as possible (minimum 8-15 items, more for longer texts).
                 - Include all significant vocabulary: nouns, verbs, adjectives, phrases, idioms, and key expressions.
                 - Prioritize words that are commonly used, culturally significant, or difficult to understand.
-                - If translation is to Korean, provide explanations for difficult Korean words.
-                - If translation is from Korean, provide meanings of foreign words in Korean.
+                - If translation is to Korean, provide explanations for difficult Korean words in the translated text.
+                - If translation is from Korean (e.g., Korean -> Thai), provide meanings of Thai/English words in Korean.
                 - If source language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
+                - If target language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word in the translated text.
                 `;
 
                 const currentKey = state.apiKey || defaultApiKey;
@@ -953,11 +961,11 @@
         function toggleWordGuide() {
             const wordGuideContent = document.getElementById('word-guide-content');
             const wordGuideIcon = document.getElementById('word-guide-icon');
-            
+
             if (!wordGuideContent || !wordGuideIcon) return;
-            
+
             const isHidden = wordGuideContent.classList.contains('hidden');
-            
+
             if (isHidden) {
                 wordGuideContent.classList.remove('hidden');
                 wordGuideIcon.classList.remove('fa-chevron-down');
@@ -975,15 +983,15 @@
                 console.warn('Speech recognition not supported');
                 return null;
             }
-            
+
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
-            
+
             // 설정
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = getRecognitionLanguage();
-            
+
             // 이벤트 핸들러
             recognition.onstart = () => {
                 isListening = true;
@@ -991,24 +999,24 @@
                 if (voiceStatus) voiceStatus.classList.remove('hidden');
                 updateVoiceButton(true);
             };
-            
+
             recognition.onresult = (event) => {
                 let finalTranscript = '';
-                
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript + ' ';
                     }
                 }
-                
+
                 if (finalTranscript) {
                     const inputText = document.getElementById('input-text');
                     const currentText = inputText.value;
                     inputText.value = (currentText + finalTranscript).trim();
                 }
             };
-            
+
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
                 stopVoiceInput();
@@ -1018,14 +1026,14 @@
                 }
                 alert('음성 인식 오류: ' + event.error);
             };
-            
+
             recognition.onend = () => {
                 isListening = false;
                 const voiceStatus = document.getElementById('voice-status');
                 if (voiceStatus) voiceStatus.classList.add('hidden');
                 updateVoiceButton(false);
             };
-            
+
             return recognition;
         }
 
@@ -1037,7 +1045,7 @@
                     return;
                 }
             }
-            
+
             if (isListening) {
                 stopVoiceInput();
             } else {
@@ -1064,7 +1072,7 @@
                 'en': 'en-US',
                 'auto': 'ko-KR'
             };
-            
+
             return langMap[state.sourceLang] || 'ko-KR';
         }
 
@@ -1085,19 +1093,19 @@
         async function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             // 파일 크기 제한 (10MB)
             if (file.size > 10 * 1024 * 1024) {
                 alert('이미지 크기는 10MB 이하여야 합니다.');
                 return;
             }
-            
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const imageUrl = e.target.result;
                 await performOCR(imageUrl);
             };
-            
+
             reader.readAsDataURL(file);
         }
 
@@ -1105,13 +1113,13 @@
             const ocrProgress = document.getElementById('ocr-progress');
             const ocrProgressBar = document.getElementById('ocr-progress-bar');
             const ocrProgressText = document.getElementById('ocr-progress-text');
-            
+
             if (!ocrProgress || !ocrProgressBar || !ocrProgressText) return;
-            
+
             ocrProgress.classList.remove('hidden');
             ocrProgressBar.style.width = '0%';
             ocrProgressText.textContent = '0%';
-            
+
             try {
                 const { data: { text } } = await Tesseract.recognize(
                     imageUrl,
@@ -1126,18 +1134,18 @@
                         }
                     }
                 );
-                
+
                 // 추출된 텍스트를 입력창에 추가
                 const inputText = document.getElementById('input-text');
                 const currentText = inputText.value.trim();
                 const extractedText = text.trim();
-                
+
                 if (extractedText) {
                     inputText.value = currentText ? (currentText + '\n\n' + extractedText) : extractedText;
                 } else {
                     alert('이미지에서 텍스트를 찾을 수 없습니다.');
                 }
-                
+
             } catch (error) {
                 console.error('OCR Error:', error);
                 alert('이미지에서 텍스트를 추출하는데 실패했습니다: ' + error.message);
@@ -1155,7 +1163,7 @@
                 'en': 'eng',
                 'auto': 'kor+eng+tha'
             };
-            
+
             return langMap[state.sourceLang] || 'kor+eng+tha';
         }
 
@@ -1165,7 +1173,7 @@
             const sentences = text.match(/[^.!?。！？]+[.!?。！？]+/g) || [text];
             const chunks = [];
             let currentChunk = '';
-            
+
             sentences.forEach(sentence => {
                 if ((currentChunk + sentence).length <= maxLength) {
                     currentChunk += sentence;
@@ -1174,9 +1182,9 @@
                     currentChunk = sentence;
                 }
             });
-            
+
             if (currentChunk.trim()) chunks.push(currentChunk.trim());
-            
+
             return chunks.length > 0 ? chunks : [text];
         }
 
