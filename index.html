@@ -708,7 +708,11 @@
                 3. If input is Thai/English -> Translate to Korean.
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
-                6. Extract 3-5 important words/expressions from the translated text and provide Korean meanings.
+                6. Extract as many important words/expressions as possible from the translated text and provide Korean meanings. 
+                   - For short texts (under 50 words): extract at least 5-8 words/expressions
+                   - For medium texts (50-200 words): extract at least 10-15 words/expressions
+                   - For long texts (over 200 words): extract at least 15-20 words/expressions or more
+                   - Include all significant nouns, verbs, adjectives, phrases, and idiomatic expressions
                 7. If source language is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
 
                 Output JSON ONLY: {
@@ -724,9 +728,11 @@
                     ]
                 }
 
-                Note: 
-                - wordGuide should contain 3-5 most important words/expressions. 
-                - If translation is to Korean, provide explanations for difficult Korean words. 
+                Note:
+                - wordGuide should contain as many important words/expressions as possible (minimum 8-15 items, more for longer texts).
+                - Include all significant vocabulary: nouns, verbs, adjectives, phrases, idioms, and key expressions.
+                - Prioritize words that are commonly used, culturally significant, or difficult to understand.
+                - If translation is to Korean, provide explanations for difficult Korean words.
                 - If translation is from Korean, provide meanings of foreign words in Korean.
                 - If source language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
                 `;
@@ -844,12 +850,12 @@
             wordGuide.forEach((item, index) => {
                 const wordItem = document.createElement('div');
                 wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
-                
+
                 // 태국어 단어와 발음을 함께 표시: "태국어 단어 (한국어 발음)"
-                const wordDisplay = isThaiSource && item.pronunciation 
+                const wordDisplay = isThaiSource && item.pronunciation
                     ? `${item.word || ''} <span class="text-blue-300 font-medium">(${item.pronunciation})</span>`
                     : item.word || '';
-                
+
                 wordItem.innerHTML = `
                     <div class="flex items-start gap-3">
                         <span class="text-blue-400 font-bold text-xs min-w-[24px]">${index + 1}.</span>
