@@ -202,11 +202,11 @@
                 padding: 1.25rem !important;
                 font-size: 14px !important;
             }
-            
+
             #word-guide-section {
                 font-size: 14px;
             }
-            
+
             #word-guide-content {
                 font-size: 13px;
             }
@@ -414,7 +414,8 @@
 
                     <!-- Word Guide Section -->
                     <div id="word-guide-section" class="hidden mt-4 pt-4 border-t border-gray-700">
-                        <button onclick="toggleWordGuide()" class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3">
+                        <button onclick="toggleWordGuide()"
+                            class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3">
                             <i class="fas fa-book text-xs"></i>
                             <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
                             <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"></i>
@@ -481,21 +482,21 @@
                 nuance: "뉘앙스 (Tone)", polite: "예의 바르게", normal: "보통", casual: "편안하게", playful: "장난스럽게",
                 placeholder: "여기에 내용을 입력하세요...", translating: "AI 번역 중...",
                 error: "오류 발생! 설정(⚙️)에서 API 키를 확인하세요.", copied: "복사되었습니다!",
-                wordGuide: "단어/표현 안내", word: "단어", meaning: "의미", example: "예문"
+                wordGuide: "단어/표현 안내", word: "단어", meaning: "의미", example: "예문", pronunciation: "발음"
             },
             th: {
                 auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
                 nuance: "น้ำเสียง (Tone)", polite: "สุภาพ", normal: "ทั่วไป", casual: "กันเอง", playful: "ขี้เล่น",
                 placeholder: "พิมพ์ข้อความที่นี่...", translating: "กำลังแปล...",
                 error: "เกิดข้อผิดพลาด! โปรดตรวจสอบ API Key", copied: "คัดลอกแล้ว!",
-                wordGuide: "คำแนะนำคำศัพท์", word: "คำ", meaning: "ความหมาย", example: "ตัวอย่าง"
+                wordGuide: "คำแนะนำคำศัพท์", word: "คำ", meaning: "ความหมาย", example: "ตัวอย่าง", pronunciation: "การออกเสียง"
             },
             en: {
                 auto: "Auto", ko: "Korean", th: "Thai", en: "English",
                 nuance: "Nuance", polite: "Polite", normal: "Normal", casual: "Casual", playful: "Playful",
                 placeholder: "Type here...", translating: "Translating...",
                 error: "Error! Check API Key in Settings.", copied: "Copied!",
-                wordGuide: "Word Guide", word: "Word", meaning: "Meaning", example: "Example"
+                wordGuide: "Word Guide", word: "Word", meaning: "Meaning", example: "Example", pronunciation: "Pronunciation"
             }
         };
 
@@ -630,7 +631,7 @@
             });
             const inputText = document.getElementById('input-text');
             if (inputText && I18N[lang]) inputText.placeholder = I18N[lang].placeholder;
-            
+
             // Update word guide toggle text
             const toggleText = document.getElementById('word-guide-toggle-text');
             if (toggleText && I18N[lang] && I18N[lang].wordGuide) {
@@ -708,16 +709,26 @@
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
                 6. Extract 3-5 important words/expressions from the translated text and provide Korean meanings.
+                7. If translation target is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each word in wordGuide.
 
-                Output JSON ONLY: { 
-                    "detectedSource": "LANG_CODE", 
+                Output JSON ONLY: {
+                    "detectedSource": "LANG_CODE",
                     "translatedText": "TEXT",
                     "wordGuide": [
-                        { "word": "원문단어", "meaning": "한국어 의미", "example": "예문 (선택적)" }
+                        { 
+                            "word": "원문단어", 
+                            "meaning": "한국어 의미", 
+                            "pronunciation": "한글발음 (태국어 번역 결과일 때만)", 
+                            "example": "예문 (선택적)" 
+                        }
                     ]
                 }
-                
-                Note: wordGuide should contain 3-5 most important words/expressions. If translation is to Korean, provide explanations for difficult Korean words. If translation is from Korean, provide meanings of foreign words in Korean.
+
+                Note: 
+                - wordGuide should contain 3-5 most important words/expressions. 
+                - If translation is to Korean, provide explanations for difficult Korean words. 
+                - If translation is from Korean, provide meanings of foreign words in Korean.
+                - If target language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each word.
                 `;
 
                 const currentKey = state.apiKey || defaultApiKey;
@@ -746,7 +757,7 @@
                 if (!result.translatedText || !result.detectedSource) {
                     throw new Error("Invalid translation result format");
                 }
-                
+
                 // Ensure wordGuide exists (backward compatibility)
                 if (!result.wordGuide) {
                     result.wordGuide = [];
@@ -759,8 +770,14 @@
 
                 state.lastResult = result.translatedText;
                 
+                // Determine target language for word guide
+                let wordGuideTargetLang = state.targetLang;
+                if (wordGuideTargetLang === 'auto') {
+                    wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
+                }
+                
                 // Display word guide if available
-                displayWordGuide(result.wordGuide);
+                displayWordGuide(result.wordGuide, wordGuideTargetLang);
 
                 // Determine target language for TTS
                 let ttsLang = state.targetLang;
@@ -806,25 +823,28 @@
         }
 
         // --- WORD GUIDE FUNCTIONS ---
-        function displayWordGuide(wordGuide) {
+        function displayWordGuide(wordGuide, targetLang) {
             const wordGuideSection = document.getElementById('word-guide-section');
             const wordGuideContent = document.getElementById('word-guide-content');
-            
+
             if (!wordGuideSection || !wordGuideContent) return;
-            
+
             // Hide if no word guide
             if (!wordGuide || !Array.isArray(wordGuide) || wordGuide.length === 0) {
                 wordGuideSection.classList.add('hidden');
                 return;
             }
-            
+
             // Show section
             wordGuideSection.classList.remove('hidden');
             wordGuideContent.classList.add('hidden'); // Start collapsed
-            
+
             // Clear previous content
             wordGuideContent.innerHTML = '';
-            
+
+            // Check if target language is Thai (for pronunciation display)
+            const isThaiTranslation = targetLang === 'th';
+
             // Create word guide items
             wordGuide.forEach((item, index) => {
                 const wordItem = document.createElement('div');
@@ -836,6 +856,11 @@
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="font-bold text-white text-sm">${item.word || ''}</span>
                             </div>
+                            ${isThaiTranslation && item.pronunciation ? `
+                                <div class="text-blue-300 text-xs mb-1 font-medium">
+                                    <span class="text-gray-500">${I18N[state.uiLang].pronunciation}:</span> ${item.pronunciation}
+                                </div>
+                            ` : ''}
                             <div class="text-gray-300 text-xs mb-1">
                                 <span class="text-gray-500">${I18N[state.uiLang].meaning}:</span> ${item.meaning || ''}
                             </div>
@@ -849,7 +874,7 @@
                 `;
                 wordGuideContent.appendChild(wordItem);
             });
-            
+
             // Update i18n text
             const toggleText = document.getElementById('word-guide-toggle-text');
             if (toggleText && I18N[state.uiLang].wordGuide) {
@@ -860,11 +885,11 @@
         function toggleWordGuide() {
             const wordGuideContent = document.getElementById('word-guide-content');
             const wordGuideIcon = document.getElementById('word-guide-icon');
-            
+
             if (!wordGuideContent || !wordGuideIcon) return;
-            
+
             const isHidden = wordGuideContent.classList.contains('hidden');
-            
+
             if (isHidden) {
                 wordGuideContent.classList.remove('hidden');
                 wordGuideIcon.classList.remove('fa-chevron-down');
