@@ -50,11 +50,12 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
         7. Add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
            - If wordGuide contains Thai words (from source or target), ALWAYS include pronunciation field.
         8. ALWAYS provide "example" field for EVERY word/expression in wordGuide.
-           - Example should be a natural sentence using the word/expression in context
-           - Example MUST be written in KOREAN (한국어) - translate the example to Korean
-           - Example should clearly demonstrate how to use the word/expression in a sentence
+           - Example format: "원문단어 (한국어 발음, 한국어 의미)"
+           - Example should show the original word/expression followed by Korean pronunciation and meaning in parentheses
+           - For Thai words: "태국어단어 (한국어발음, 한국어의미)"
+           - For English words: "English word (한국어발음, 한국어의미)"
+           - For Korean words: "한국어단어 (한국어의미)" - pronunciation not needed for Korean
            - Example is REQUIRED, not optional - provide it for ALL items in wordGuide
-           - Format: "이 단어를 사용한 표현, 문장" (Korean sentence showing word usage)
 
         Output JSON ONLY: {
             "detectedSource": "LANG_CODE",
@@ -64,7 +65,7 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
                     "word": "원문단어",
                     "meaning": "한국어 의미",
                     "pronunciation": "한글발음 (원문이 태국어일 때만)",
-                    "example": "예문 (필수 - 한국어로 작성된 이 단어를 사용한 표현, 문장)"
+                    "example": "예문 (필수 - 형식: 원문단어 (한국어 발음, 한국어 의미))"
                 }
             ]
         }
@@ -83,9 +84,11 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
         - ALWAYS provide Korean meanings for all extracted words.
         - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
         - ALWAYS provide "example" field for EVERY word/expression - this is REQUIRED, not optional.
-        - Example format: Use the word/expression in a natural sentence that clearly demonstrates its usage.
-        - Example language: MUST be in KOREAN (한국어) - translate the example sentence to Korean.
-        - Example should show "이 단어를 사용한 표현, 문장" in Korean.
+        - Example format: "원문단어 (한국어 발음, 한국어 의미)"
+        - Example must show the original word followed by Korean pronunciation and meaning in parentheses.
+        - For Thai words: Include Korean pronunciation (한글 발음) and Korean meaning.
+        - For English words: Include Korean pronunciation (if applicable) and Korean meaning.
+        - For Korean words: Only Korean meaning is needed (pronunciation not required).
         `;
 }
 
