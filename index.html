@@ -190,7 +190,7 @@
                 grid-template-columns: repeat(4, 1fr) !important;
                 gap: 1rem !important;
             }
-            
+
             /* 모바일에서만 2열 유지 */
             @media (max-width: 767px) {
                 #nuance-group {
@@ -201,6 +201,14 @@
             #nuance-group button {
                 padding: 1.25rem !important;
                 font-size: 14px !important;
+            }
+            
+            #word-guide-section {
+                font-size: 14px;
+            }
+            
+            #word-guide-content {
+                font-size: 13px;
             }
         }
 
@@ -404,6 +412,18 @@
                     </div>
                     <p id="output-text" class="text-2xl font-bold text-white leading-relaxed thai-font break-words"></p>
 
+                    <!-- Word Guide Section -->
+                    <div id="word-guide-section" class="hidden mt-4 pt-4 border-t border-gray-700">
+                        <button onclick="toggleWordGuide()" class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3">
+                            <i class="fas fa-book text-xs"></i>
+                            <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
+                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="word-guide-content" class="hidden space-y-2">
+                            <!-- Word guide items will be inserted here -->
+                        </div>
+                    </div>
+
                     <!-- Error Log -->
                     <div id="error-log"
                         class="hidden mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-xs text-red-300 font-mono break-all">
@@ -460,19 +480,22 @@
                 auto: "자동", ko: "한국어", th: "태국어", en: "영어",
                 nuance: "뉘앙스 (Tone)", polite: "예의 바르게", normal: "보통", casual: "편안하게", playful: "장난스럽게",
                 placeholder: "여기에 내용을 입력하세요...", translating: "AI 번역 중...",
-                error: "오류 발생! 설정(⚙️)에서 API 키를 확인하세요.", copied: "복사되었습니다!"
+                error: "오류 발생! 설정(⚙️)에서 API 키를 확인하세요.", copied: "복사되었습니다!",
+                wordGuide: "단어/표현 안내", word: "단어", meaning: "의미", example: "예문"
             },
             th: {
                 auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
                 nuance: "น้ำเสียง (Tone)", polite: "สุภาพ", normal: "ทั่วไป", casual: "กันเอง", playful: "ขี้เล่น",
                 placeholder: "พิมพ์ข้อความที่นี่...", translating: "กำลังแปล...",
-                error: "เกิดข้อผิดพลาด! โปรดตรวจสอบ API Key", copied: "คัดลอกแล้ว!"
+                error: "เกิดข้อผิดพลาด! โปรดตรวจสอบ API Key", copied: "คัดลอกแล้ว!",
+                wordGuide: "คำแนะนำคำศัพท์", word: "คำ", meaning: "ความหมาย", example: "ตัวอย่าง"
             },
             en: {
                 auto: "Auto", ko: "Korean", th: "Thai", en: "English",
                 nuance: "Nuance", polite: "Polite", normal: "Normal", casual: "Casual", playful: "Playful",
                 placeholder: "Type here...", translating: "Translating...",
-                error: "Error! Check API Key in Settings.", copied: "Copied!"
+                error: "Error! Check API Key in Settings.", copied: "Copied!",
+                wordGuide: "Word Guide", word: "Word", meaning: "Meaning", example: "Example"
             }
         };
 
@@ -528,7 +551,7 @@
                     container.style.maxWidth = '';
                 }
             }
-            
+
             // 디버깅: PC 레이아웃 확인
             if (state.isDesktop) {
                 console.log('PC 레이아웃 적용됨:', {
@@ -607,6 +630,12 @@
             });
             const inputText = document.getElementById('input-text');
             if (inputText && I18N[lang]) inputText.placeholder = I18N[lang].placeholder;
+            
+            // Update word guide toggle text
+            const toggleText = document.getElementById('word-guide-toggle-text');
+            if (toggleText && I18N[lang] && I18N[lang].wordGuide) {
+                toggleText.innerText = I18N[lang].wordGuide;
+            }
         }
 
         function setupRadioButtons(groupId, stateKey, dataPath) {
@@ -637,6 +666,8 @@
         function clearInput() {
             document.getElementById('input-text').value = '';
             document.getElementById('result-card').classList.add('hidden');
+            const wordGuideSection = document.getElementById('word-guide-section');
+            if (wordGuideSection) wordGuideSection.classList.add('hidden');
             document.getElementById('input-text').focus();
         }
 
@@ -676,8 +707,17 @@
                 3. If input is Thai/English -> Translate to Korean.
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
+                6. Extract 3-5 important words/expressions from the translated text and provide Korean meanings.
 
-                Output JSON ONLY: { "detectedSource": "LANG_CODE", "translatedText": "TEXT" }
+                Output JSON ONLY: { 
+                    "detectedSource": "LANG_CODE", 
+                    "translatedText": "TEXT",
+                    "wordGuide": [
+                        { "word": "원문단어", "meaning": "한국어 의미", "example": "예문 (선택적)" }
+                    ]
+                }
+                
+                Note: wordGuide should contain 3-5 most important words/expressions. If translation is to Korean, provide explanations for difficult Korean words. If translation is from Korean, provide meanings of foreign words in Korean.
                 `;
 
                 const currentKey = state.apiKey || defaultApiKey;
@@ -706,6 +746,11 @@
                 if (!result.translatedText || !result.detectedSource) {
                     throw new Error("Invalid translation result format");
                 }
+                
+                // Ensure wordGuide exists (backward compatibility)
+                if (!result.wordGuide) {
+                    result.wordGuide = [];
+                }
 
                 spinner.classList.add('hidden');
                 outputText.innerText = result.translatedText;
@@ -713,6 +758,9 @@
                 if (detectedLabel) detectedLabel.innerText = result.detectedSource.toUpperCase();
 
                 state.lastResult = result.translatedText;
+                
+                // Display word guide if available
+                displayWordGuide(result.wordGuide);
 
                 // Determine target language for TTS
                 let ttsLang = state.targetLang;
@@ -755,6 +803,77 @@
         function copyResult() {
             navigator.clipboard.writeText(state.lastResult);
             alert(I18N[state.uiLang].copied);
+        }
+
+        // --- WORD GUIDE FUNCTIONS ---
+        function displayWordGuide(wordGuide) {
+            const wordGuideSection = document.getElementById('word-guide-section');
+            const wordGuideContent = document.getElementById('word-guide-content');
+            
+            if (!wordGuideSection || !wordGuideContent) return;
+            
+            // Hide if no word guide
+            if (!wordGuide || !Array.isArray(wordGuide) || wordGuide.length === 0) {
+                wordGuideSection.classList.add('hidden');
+                return;
+            }
+            
+            // Show section
+            wordGuideSection.classList.remove('hidden');
+            wordGuideContent.classList.add('hidden'); // Start collapsed
+            
+            // Clear previous content
+            wordGuideContent.innerHTML = '';
+            
+            // Create word guide items
+            wordGuide.forEach((item, index) => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
+                wordItem.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="text-blue-400 font-bold text-xs min-w-[24px]">${index + 1}.</span>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-white text-sm">${item.word || ''}</span>
+                            </div>
+                            <div class="text-gray-300 text-xs mb-1">
+                                <span class="text-gray-500">${I18N[state.uiLang].meaning}:</span> ${item.meaning || ''}
+                            </div>
+                            ${item.example ? `
+                                <div class="text-gray-400 text-xs italic mt-1">
+                                    <span class="text-gray-500">${I18N[state.uiLang].example}:</span> ${item.example}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                wordGuideContent.appendChild(wordItem);
+            });
+            
+            // Update i18n text
+            const toggleText = document.getElementById('word-guide-toggle-text');
+            if (toggleText && I18N[state.uiLang].wordGuide) {
+                toggleText.innerText = I18N[state.uiLang].wordGuide;
+            }
+        }
+
+        function toggleWordGuide() {
+            const wordGuideContent = document.getElementById('word-guide-content');
+            const wordGuideIcon = document.getElementById('word-guide-icon');
+            
+            if (!wordGuideContent || !wordGuideIcon) return;
+            
+            const isHidden = wordGuideContent.classList.contains('hidden');
+            
+            if (isHidden) {
+                wordGuideContent.classList.remove('hidden');
+                wordGuideIcon.classList.remove('fa-chevron-down');
+                wordGuideIcon.classList.add('fa-chevron-up');
+            } else {
+                wordGuideContent.classList.add('hidden');
+                wordGuideIcon.classList.remove('fa-chevron-up');
+                wordGuideIcon.classList.add('fa-chevron-down');
+            }
         }
 
     </script>
