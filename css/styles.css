@@ -1,0 +1,324 @@
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #121212;
+    color: white;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.thai-font {
+    font-family: 'Sarabun', sans-serif;
+}
+
+.toss-dark {
+    background-color: #1e1e1e;
+    color: #f2f4f6;
+}
+
+.toss-input {
+    background-color: #2c2c2c;
+    border: none;
+    color: white;
+    transition: all 0.2s;
+}
+
+.toss-input:focus {
+    background-color: #333;
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.toss-button {
+    background-color: #3182f6;
+    transition: all 0.2s;
+}
+
+.toss-button:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+}
+
+/* 언어 선택 버튼 */
+.lang-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #2c2c2c;
+    color: #a1a1aa;
+    transition: all 0.2s;
+}
+
+.lang-btn.active {
+    background-color: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* UI 언어 스위처 */
+.ui-lang-btn {
+    opacity: 0.5;
+    filter: grayscale(1);
+    transition: all 0.2s;
+}
+
+.ui-lang-btn.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.1);
+}
+
+/* 펄스 애니메이션 */
+.pulse-text {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Toast Animation */
+@keyframes toast-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes toast-fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+#toast.show {
+    animation: toast-fade-in 0.3s ease-out;
+}
+
+#toast.hide {
+    animation: toast-fade-out 0.3s ease-out;
+}
+
+/* 설정 모달 */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+/* 모바일 스타일 (기본) */
+.mobile-only {
+    display: block;
+}
+
+.desktop-only {
+    display: none;
+}
+
+/* PC 스타일 - 미디어 쿼리로 직접 적용 */
+@media (min-width: 768px) {
+    .container-wrapper {
+        max-width: 1400px !important;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .mobile-only {
+        display: none;
+    }
+
+    .desktop-only {
+        display: block;
+    }
+
+    header {
+        padding: 2rem 2.5rem !important;
+        border-radius: 0 0 1.5rem 1.5rem;
+    }
+
+    .lang-btn {
+        padding: 10px 18px !important;
+        font-size: 14px !important;
+        border-radius: 10px;
+    }
+
+    #input-text {
+        min-height: 200px !important;
+        font-size: 18px !important;
+        padding: 1.5rem !important;
+    }
+
+    #output-text {
+        font-size: 2rem !important;
+        line-height: 1.6;
+    }
+
+    .toss-button {
+        width: 64px !important;
+        height: 64px !important;
+        font-size: 1.25rem !important;
+    }
+
+    .toss-button:hover {
+        background-color: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .lang-btn:hover {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    main {
+        padding: 2rem !important;
+        max-width: 100%;
+    }
+
+    .toss-dark {
+        padding: 2rem !important;
+    }
+
+    h1 {
+        font-size: 1.75rem !important;
+    }
+
+    #result-card .toss-dark {
+        padding: 2.5rem !important;
+    }
+
+    #nuance-group {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 1rem !important;
+    }
+
+    /* 모바일에서만 2열 유지 */
+    @media (max-width: 767px) {
+        #nuance-group {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    #nuance-group button {
+        padding: 1.25rem !important;
+        font-size: 14px !important;
+    }
+
+    #word-guide-section {
+        font-size: 14px;
+    }
+
+    #word-guide-content {
+        font-size: 13px;
+    }
+}
+
+/* 대형 화면 스타일 (1920px 이상) */
+@media (min-width: 1920px) {
+    .container-wrapper {
+        max-width: 1600px !important;
+        padding: 0 3rem !important;
+    }
+
+    header {
+        padding: 2.5rem 3rem !important;
+    }
+
+    main {
+        padding: 3rem !important;
+    }
+
+    #input-text {
+        min-height: 250px !important;
+        font-size: 20px !important;
+        padding: 2rem !important;
+    }
+
+    #output-text {
+        font-size: 2.25rem !important;
+    }
+
+    .lang-btn {
+        padding: 12px 22px !important;
+        font-size: 15px !important;
+    }
+
+    .toss-button {
+        width: 72px !important;
+        height: 72px !important;
+        font-size: 1.5rem !important;
+    }
+
+    h1 {
+        font-size: 2rem !important;
+    }
+
+    .toss-dark {
+        padding: 2.5rem !important;
+    }
+
+    #nuance-group {
+        gap: 1.5rem !important;
+    }
+
+    #nuance-group button {
+        padding: 1.5rem !important;
+        font-size: 15px !important;
+    }
+}
+
+/* 모바일 스타일 */
+@media (max-width: 767px) {
+    body.is-mobile .container-wrapper {
+        max-width: 100%;
+    }
+
+    body.is-mobile header {
+        padding: 1rem;
+    }
+
+    body.is-mobile .lang-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    body.is-mobile #input-text {
+        min-height: 120px;
+        font-size: 16px;
+    }
+
+    body.is-mobile #output-text {
+        font-size: 1.5rem;
+    }
+
+    body.is-mobile .toss-button {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* 터치 디바이스 스타일 */
+@media (hover: none) and (pointer: coarse) {
+    .toss-button:active {
+        transform: scale(0.95);
+    }
+
+    .lang-btn:active {
+        transform: scale(0.98);
+    }
+}
+

@@ -1,0 +1,23 @@
+/**
+ * 애플리케이션 설정 상수
+ * @type {Object}
+ */
+const CONFIG = {
+    API_BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
+    MODEL_NAME: 'gemini-2.5-flash-preview-09-2025',
+    DESKTOP_BREAKPOINT: 768,
+    TOAST_DURATION: 3000,
+    ANIMATION_DURATION: 300,
+    MAX_RETRIES: 3,
+    RETRY_DELAY: 1000,
+    RESIZE_DEBOUNCE_DELAY: 150,
+    MAX_TEXT_LENGTH: 10000,
+    API_KEY_STORAGE_KEY: 'gemini_api_key'
+};
+
+/**
+ * 기본 API 키 (공개 사용 시 빈 문자열)
+ * @type {string}
+ */
+const defaultApiKey = "";
+

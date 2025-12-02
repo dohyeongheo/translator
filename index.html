@@ -10,332 +10,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Sarabun:wght@400;700&display=swap"
         rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #121212;
-            color: white;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .thai-font {
-            font-family: 'Sarabun', sans-serif;
-        }
-
-        .toss-dark {
-            background-color: #1e1e1e;
-            color: #f2f4f6;
-        }
-
-        .toss-input {
-            background-color: #2c2c2c;
-            border: none;
-            color: white;
-            transition: all 0.2s;
-        }
-
-        .toss-input:focus {
-            background-color: #333;
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
-
-        .toss-button {
-            background-color: #3182f6;
-            transition: all 0.2s;
-        }
-
-        .toss-button:active {
-            transform: scale(0.96);
-            opacity: 0.9;
-        }
-
-        /* 언어 선택 버튼 */
-        .lang-btn {
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            background-color: #2c2c2c;
-            color: #a1a1aa;
-            transition: all 0.2s;
-        }
-
-        .lang-btn.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        /* UI 언어 스위처 */
-        .ui-lang-btn {
-            opacity: 0.5;
-            filter: grayscale(1);
-            transition: all 0.2s;
-        }
-
-        .ui-lang-btn.active {
-            opacity: 1;
-            filter: grayscale(0);
-            transform: scale(1.1);
-        }
-
-        /* 펄스 애니메이션 */
-        .pulse-text {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
-        /* Toast Animation */
-        @keyframes toast-fade-in {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes toast-fade-out {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: 0;
-            }
-        }
-
-        #toast.show {
-            animation: toast-fade-in 0.3s ease-out;
-        }
-
-        #toast.hide {
-            animation: toast-fade-out 0.3s ease-out;
-        }
-
-        /* 설정 모달 */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-        }
-
-        /* 모바일 스타일 (기본) */
-        .mobile-only {
-            display: block;
-        }
-
-        .desktop-only {
-            display: none;
-        }
-
-        /* PC 스타일 - 미디어 쿼리로 직접 적용 */
-        @media (min-width: 768px) {
-            .container-wrapper {
-                max-width: 1400px !important;
-                margin: 0 auto;
-                padding: 0 2rem;
-            }
-
-            .mobile-only {
-                display: none;
-            }
-
-            .desktop-only {
-                display: block;
-            }
-
-            header {
-                padding: 2rem 2.5rem !important;
-                border-radius: 0 0 1.5rem 1.5rem;
-            }
-
-            .lang-btn {
-                padding: 10px 18px !important;
-                font-size: 14px !important;
-                border-radius: 10px;
-            }
-
-            #input-text {
-                min-height: 200px !important;
-                font-size: 18px !important;
-                padding: 1.5rem !important;
-            }
-
-            #output-text {
-                font-size: 2rem !important;
-                line-height: 1.6;
-            }
-
-            .toss-button {
-                width: 64px !important;
-                height: 64px !important;
-                font-size: 1.25rem !important;
-            }
-
-            .toss-button:hover {
-                background-color: #2563eb;
-                transform: scale(1.05);
-            }
-
-            .lang-btn:hover {
-                background-color: #3b82f6;
-                color: white;
-            }
-
-            main {
-                padding: 2rem !important;
-                max-width: 100%;
-            }
-
-            .toss-dark {
-                padding: 2rem !important;
-            }
-
-            h1 {
-                font-size: 1.75rem !important;
-            }
-
-            #result-card .toss-dark {
-                padding: 2.5rem !important;
-            }
-
-            #nuance-group {
-                grid-template-columns: repeat(4, 1fr) !important;
-                gap: 1rem !important;
-            }
-
-            /* 모바일에서만 2열 유지 */
-            @media (max-width: 767px) {
-                #nuance-group {
-                    grid-template-columns: repeat(2, 1fr) !important;
-                }
-            }
-
-            #nuance-group button {
-                padding: 1.25rem !important;
-                font-size: 14px !important;
-            }
-
-            #word-guide-section {
-                font-size: 14px;
-            }
-
-            #word-guide-content {
-                font-size: 13px;
-            }
-        }
-
-        /* 대형 화면 스타일 (1920px 이상) */
-        @media (min-width: 1920px) {
-            .container-wrapper {
-                max-width: 1600px !important;
-                padding: 0 3rem !important;
-            }
-
-            header {
-                padding: 2.5rem 3rem !important;
-            }
-
-            main {
-                padding: 3rem !important;
-            }
-
-            #input-text {
-                min-height: 250px !important;
-                font-size: 20px !important;
-                padding: 2rem !important;
-            }
-
-            #output-text {
-                font-size: 2.25rem !important;
-            }
-
-            .lang-btn {
-                padding: 12px 22px !important;
-                font-size: 15px !important;
-            }
-
-            .toss-button {
-                width: 72px !important;
-                height: 72px !important;
-                font-size: 1.5rem !important;
-            }
-
-            h1 {
-                font-size: 2rem !important;
-            }
-
-            .toss-dark {
-                padding: 2.5rem !important;
-            }
-
-            #nuance-group {
-                gap: 1.5rem !important;
-            }
-
-            #nuance-group button {
-                padding: 1.5rem !important;
-                font-size: 15px !important;
-            }
-        }
-
-        /* 모바일 스타일 */
-        @media (max-width: 767px) {
-            body.is-mobile .container-wrapper {
-                max-width: 100%;
-            }
-
-            body.is-mobile header {
-                padding: 1rem;
-            }
-
-            body.is-mobile .lang-btn {
-                padding: 6px 10px;
-                font-size: 11px;
-            }
-
-            body.is-mobile #input-text {
-                min-height: 120px;
-                font-size: 16px;
-            }
-
-            body.is-mobile #output-text {
-                font-size: 1.5rem;
-            }
-
-            body.is-mobile .toss-button {
-                width: 48px;
-                height: 48px;
-            }
-        }
-
-        /* 터치 디바이스 스타일 */
-        @media (hover: none) and (pointer: coarse) {
-            .toss-button:active {
-                transform: scale(0.95);
-            }
-
-            .lang-btn:active {
-                transform: scale(0.98);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
 </head>
 
 <body class="h-screen flex flex-col overflow-hidden bg-black">
@@ -350,31 +26,32 @@
                 <div class="flex gap-2">
                     <!-- Settings Button -->
                     <button onclick="toggleSettings()"
-                        class="bg-black/30 p-2 rounded-full text-gray-400 hover:text-white transition">
-                        <i class="fas fa-cog"></i>
+                        class="bg-black/30 p-2 rounded-full text-gray-400 hover:text-white transition"
+                        aria-label="설정 열기" title="설정">
+                        <i class="fas fa-cog" aria-hidden="true"></i>
                     </button>
                     <!-- UI Language Switcher -->
-                    <div class="flex gap-2 bg-black/30 p-1.5 rounded-full">
-                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg">🇰🇷</button>
-                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg">🇹🇭</button>
-                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg">🇺🇸</button>
+                    <div class="flex gap-2 bg-black/30 p-1.5 rounded-full" role="group" aria-label="UI 언어 선택">
+                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg" aria-label="한국어" title="한국어">🇰🇷</button>
+                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg" aria-label="태국어" title="태국어">🇹🇭</button>
+                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg" aria-label="영어" title="영어">🇺🇸</button>
                     </div>
                 </div>
             </div>
 
             <!-- Trans Language Selector -->
-            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2">
-                <div class="flex gap-1" id="source-lang-group">
-                    <button data-lang="auto" class="lang-btn active" data-i18n="auto">자동</button>
-                    <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
-                    <button data-lang="th" class="lang-btn" data-i18n="th">태국어</button>
-                    <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
+            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2" role="group" aria-label="번역 언어 선택">
+                <div class="flex gap-1" id="source-lang-group" role="group" aria-label="원본 언어">
+                    <button data-lang="auto" class="lang-btn active" data-i18n="auto" aria-pressed="true">자동</button>
+                    <button data-lang="ko" class="lang-btn" data-i18n="ko" aria-pressed="false">한국어</button>
+                    <button data-lang="th" class="lang-btn" data-i18n="th" aria-pressed="false">태국어</button>
+                    <button data-lang="en" class="lang-btn" data-i18n="en" aria-pressed="false">영어</button>
                 </div>
-                <i class="fas fa-arrow-right text-gray-600 text-xs mx-1"></i>
-                <div class="flex gap-1" id="target-lang-group">
-                    <button data-lang="th" class="lang-btn active" data-i18n="th">태국어</button>
-                    <button data-lang="ko" class="lang-btn" data-i18n="ko">한국어</button>
-                    <button data-lang="en" class="lang-btn" data-i18n="en">영어</button>
+                <i class="fas fa-arrow-right text-gray-600 text-xs mx-1" aria-hidden="true"></i>
+                <div class="flex gap-1" id="target-lang-group" role="group" aria-label="번역 언어">
+                    <button data-lang="th" class="lang-btn active" data-i18n="th" aria-pressed="true">태국어</button>
+                    <button data-lang="ko" class="lang-btn" data-i18n="ko" aria-pressed="false">한국어</button>
+                    <button data-lang="en" class="lang-btn" data-i18n="en" aria-pressed="false">영어</button>
                 </div>
             </div>
         </header>
@@ -417,14 +94,19 @@
                 <div class="relative">
                     <textarea id="input-text"
                         class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
-                        placeholder="여기에 내용을 입력하세요..."></textarea>
+                        placeholder="여기에 내용을 입력하세요..."
+                        aria-label="번역할 텍스트 입력"
+                        aria-describedby="input-hint"></textarea>
+                    <span id="input-hint" class="sr-only">Ctrl+Enter를 눌러 번역할 수 있습니다</span>
 
-                    <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
-                        <i class="fas fa-times-circle text-xl"></i>
+                    <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2"
+                        aria-label="입력 내용 지우기" title="지우기">
+                        <i class="fas fa-times-circle text-xl" aria-hidden="true"></i>
                     </button>
                     <button onclick="executeTranslation()"
-                        class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
-                        <i class="fas fa-paper-plane text-lg"></i>
+                        class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30"
+                        aria-label="번역 실행" title="번역 (Ctrl+Enter)">
+                        <i class="fas fa-paper-plane text-lg" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -436,11 +118,15 @@
                         <span id="detected-lang-label"
                             class="text-[10px] font-bold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">DETECTED</span>
                         <div class="flex gap-3">
-                            <button onclick="copyResult()" class="text-gray-500 hover:text-white"><i
-                                    class="far fa-copy"></i></button>
+                            <button onclick="copyResult()" class="text-gray-500 hover:text-white"
+                                aria-label="결과 복사" title="복사">
+                                <i class="far fa-copy" aria-hidden="true"></i>
+                            </button>
                             <button onclick="playTTS(state.lastResult, state.lastLang)"
-                                class="text-blue-400 hover:text-blue-300"><i id="tts-icon"
-                                    class="fas fa-volume-high text-xl"></i></button>
+                                class="text-blue-400 hover:text-blue-300"
+                                aria-label="음성 재생" title="음성 재생">
+                                <i id="tts-icon" class="fas fa-volume-high text-xl" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
                     <p id="output-text" class="text-2xl font-bold text-white leading-relaxed thai-font break-words"></p>
@@ -448,10 +134,11 @@
                     <!-- Word Guide Section -->
                     <div id="word-guide-section" class="hidden mt-4 pt-4 border-t border-gray-700">
                         <button onclick="toggleWordGuide()"
-                            class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3">
-                            <i class="fas fa-book text-xs"></i>
+                            class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3"
+                            aria-expanded="false" aria-controls="word-guide-content">
+                            <i class="fas fa-book text-xs" aria-hidden="true"></i>
                             <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
-                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"></i>
+                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform" aria-hidden="true"></i>
                         </button>
                         <div id="word-guide-content" class="hidden space-y-2">
                             <!-- Word guide items will be inserted here -->
@@ -506,491 +193,22 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="toggleSettings()"
-                    class="flex-1 p-3 rounded-xl bg-gray-700 text-gray-300 font-bold text-xs hover:bg-gray-600">취소</button>
+                    class="flex-1 p-3 rounded-xl bg-gray-700 text-gray-300 font-bold text-xs hover:bg-gray-600"
+                    aria-label="설정 닫기">취소</button>
                 <button onclick="saveApiKey()"
-                    class="flex-1 p-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500">저장</button>
+                    class="flex-1 p-3 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-500"
+                    aria-label="API 키 저장">저장</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- CONFIG ---
-        const CONFIG = {
-            API_BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
-            MODEL_NAME: 'gemini-2.5-flash-preview-09-2025',
-            DESKTOP_BREAKPOINT: 768
-        };
-
-        const defaultApiKey = "";
-
-        // --- I18N DATA ---
-        const I18N = {
-            ko: {
-                auto: "자동", ko: "한국어", th: "태국어", en: "영어",
-                nuance: "뉘앙스 (Tone)", polite: "예의 바르게", normal: "보통", casual: "편안하게", playful: "장난스럽게",
-                placeholder: "여기에 내용을 입력하세요...", translating: "AI 번역 중...",
-                error: "오류 발생! 설정(⚙️)에서 API 키를 확인하세요.", copied: "복사되었습니다!",
-                wordGuide: "단어/표현 안내", word: "단어", meaning: "의미", example: "예문", pronunciation: "발음",
-            },
-            th: {
-                auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
-                nuance: "น้ำเสียง (Tone)", polite: "สุภาพ", normal: "ทั่วไป", casual: "กันเอง", playful: "ขี้เล่น",
-                placeholder: "พิมพ์ข้อความที่นี่...", translating: "กำลังแปล...",
-                error: "เกิดข้อผิดพลาด! โปรดตรวจสอบ API Key", copied: "คัดลอกแล้ว!",
-                wordGuide: "คำแนะนำคำศัพท์", word: "คำ", meaning: "ความหมาย", example: "ตัวอย่าง", pronunciation: "การออกเสียง",
-            },
-            en: {
-                auto: "Auto", ko: "Korean", th: "Thai", en: "English",
-                nuance: "Nuance", polite: "Polite", normal: "Normal", casual: "Casual", playful: "Playful",
-                placeholder: "Type here...", translating: "Translating...",
-                error: "Error! Check API Key in Settings.", copied: "Copied!",
-                wordGuide: "Word Guide", word: "Word", meaning: "Meaning", example: "Example", pronunciation: "Pronunciation",
-            }
-        };
-
-        // --- STATE ---
-        let state = {
-            uiLang: 'ko',
-            sourceLang: 'auto',
-            targetLang: 'th',
-            tone: 'polite',
-            lastResult: '',
-            lastLang: '',
-            apiKey: defaultApiKey,
-            isMobile: false,
-            isDesktop: false
-        };
-
-
-        // --- DEVICE DETECTION ---
-        function detectDevice() {
-            const width = window.innerWidth;
-            const isDesktop = width >= CONFIG.DESKTOP_BREAKPOINT;
-
-            state.isMobile = !isDesktop;
-            state.isDesktop = isDesktop;
-
-            // body에 클래스 추가/제거
-            document.body.classList.toggle('is-mobile', state.isMobile);
-            document.body.classList.toggle('is-desktop', state.isDesktop);
-
-            // 컨테이너 너비 조정 (CSS 미디어 쿼리가 처리하므로 클래스만 제거)
-            const container = document.querySelector('.container-wrapper');
-            if (container) {
-                container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
-                if (state.isMobile) {
-                    container.classList.add('max-w-full');
-                } else {
-                    container.style.maxWidth = '';
-                }
-            }
-        }
-
-        // --- INIT ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // 디바이스 감지
-            detectDevice();
-
-            // 화면 크기 변경 시 재감지
-            let resizeTimer;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    detectDevice();
-                }, 150);
-            });
-
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) state.apiKey = savedKey;
-
-            setupRadioButtons('source-lang-group', 'sourceLang', 'dataset.lang');
-            setupRadioButtons('target-lang-group', 'targetLang', 'dataset.lang');
-            setupRadioButtons('nuance-group', 'tone', 'dataset.tone');
-
-            setActiveBtn('nuance-group', 'polite', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-
-            setUILang('ko');
-        });
-
-        // --- SETTINGS LOGIC ---
-        function toggleSettings() {
-            const modal = document.getElementById('settings-modal');
-            const input = document.getElementById('api-key-input');
-
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
-                input.value = state.apiKey;
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function saveApiKey() {
-            const input = document.getElementById('api-key-input');
-            const newKey = input.value.trim();
-            if (newKey) {
-                state.apiKey = newKey;
-                localStorage.setItem('gemini_api_key', newKey);
-                alert("API 키가 저장되었습니다.");
-                toggleSettings();
-            } else {
-                alert("API 키를 입력해주세요.");
-            }
-        }
-
-        function setUILang(lang) {
-            state.uiLang = lang;
-            document.querySelectorAll('.ui-lang-btn').forEach(btn => btn.classList.remove('active'));
-            const btns = document.querySelectorAll('.ui-lang-btn');
-            if (btns.length >= 3) {
-                if (lang === 'ko' && btns[0]) btns[0].classList.add('active');
-                if (lang === 'th' && btns[1]) btns[1].classList.add('active');
-                if (lang === 'en' && btns[2]) btns[2].classList.add('active');
-            }
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.dataset.i18n;
-                if (I18N[lang] && I18N[lang][key]) el.innerText = I18N[lang][key];
-            });
-            const inputText = document.getElementById('input-text');
-            if (inputText && I18N[lang]) inputText.placeholder = I18N[lang].placeholder;
-
-            // Update word guide toggle text
-            const toggleText = document.getElementById('word-guide-toggle-text');
-            if (toggleText && I18N[lang] && I18N[lang].wordGuide) {
-                toggleText.innerText = I18N[lang].wordGuide;
-            }
-        }
-
-        function setupRadioButtons(groupId, stateKey, dataPath) {
-            const container = document.getElementById(groupId);
-            if (!container) {
-                console.warn(`Container with id "${groupId}" not found`);
-                return;
-            }
-            container.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    container.querySelectorAll('button').forEach(b => {
-                        b.classList.remove('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-                    });
-                    btn.classList.add('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-                    const val = dataPath.includes('tone') ? btn.dataset.tone : btn.dataset.lang;
-                    state[stateKey] = val;
-                });
-            });
-        }
-
-        function setActiveBtn(groupId, val, ...classes) {
-            const container = document.getElementById(groupId);
-            const selector = `[data-tone="${val}"]`;
-            const btn = container.querySelector(selector);
-            if (btn) btn.classList.add(...classes, 'active');
-        }
-
-        function clearInput() {
-            document.getElementById('input-text').value = '';
-            document.getElementById('result-card').classList.add('hidden');
-            const wordGuideSection = document.getElementById('word-guide-section');
-            if (wordGuideSection) wordGuideSection.classList.add('hidden');
-            document.getElementById('input-text').focus();
-        }
-
-        // --- CORE LOGIC ---
-
-        async function executeTranslation() {
-            const text = document.getElementById('input-text').value.trim();
-            if (!text) return;
-
-            const resultCard = document.getElementById('result-card');
-            const outputText = document.getElementById('output-text');
-            const spinner = document.getElementById('loading-spinner');
-            const errorLog = document.getElementById('error-log');
-
-            resultCard.classList.remove('hidden');
-            resultCard.classList.remove('animate-pulse');
-            spinner.classList.remove('hidden');
-            errorLog.classList.add('hidden');
-
-            try {
-                await translateShortText(text, outputText, spinner, errorLog);
-            } catch (error) {
-                handleTranslationError(error, spinner, outputText, errorLog);
-            }
-        }
-
-        function handleTranslationError(error, spinner, outputText, errorLog) {
-            spinner.classList.add('hidden');
-            outputText.innerText = I18N[state.uiLang].error;
-            errorLog.innerText = `Error: ${error.message}`;
-            errorLog.classList.remove('hidden');
-            if (error.message.includes("401")) {
-                setTimeout(() => toggleSettings(), 1500);
-            }
-        }
-
-        function buildPersonaDescription(tone) {
-            let personaDesc = "Gender: Male. ";
-            if (tone === 'polite') personaDesc += "Tone: Very Polite & Formal. ";
-            else if (tone === 'normal') personaDesc += "Tone: Standard/Neutral. ";
-            else if (tone === 'casual') personaDesc += "Tone: Casual/Friendly. ";
-            else if (tone === 'playful') personaDesc += "Tone: Witty, Playful. ";
-            return personaDesc;
-        }
-
-        function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
-            const personaDesc = buildPersonaDescription(tone);
-            return `
-                Role: Expert AI Interpreter.
-                Input: "${text}"
-                Config: Source=${sourceLang}, Target=${targetLang}
-                Persona: ${personaDesc}
-
-                Rules:
-                1. If Source is 'auto', detect language.
-                2. Map languages: ko=Korean, th=Thai, en=English.
-                3. If input is Thai/English -> Translate to Korean.
-                4. If input is Korean -> Translate to Target (Default Thai).
-                5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
-                6. Extract important words/expressions based on the following rules and provide Korean meanings:
-                   - If source is Thai (th) -> Extract from INPUT TEXT (Thai words)
-                   - If target is Thai (th) -> Extract from TRANSLATED TEXT (Thai words)
-                   - If source is English (en) -> Extract from INPUT TEXT (English words)
-                   - If target is English (en) -> Extract from TRANSLATED TEXT (English words)
-                   - For short texts (under 50 words): extract at least 5-8 words/expressions
-                   - For medium texts (50-200 words): extract at least 10-15 words/expressions
-                   - For long texts (over 200 words): extract at least 15-20 words/expressions or more
-                   - Include all significant nouns, verbs, adjectives, phrases, and idiomatic expressions
-                7. Add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
-                   - If wordGuide contains Thai words (from source or target), ALWAYS include pronunciation field.
-
-                Output JSON ONLY: {
-                    "detectedSource": "LANG_CODE",
-                    "translatedText": "TEXT",
-                    "wordGuide": [
-                        {
-                            "word": "원문단어",
-                            "meaning": "한국어 의미",
-                            "pronunciation": "한글발음 (원문이 태국어일 때만)",
-                            "example": "예문 (선택적)"
-                        }
-                    ]
-                }
-
-                Note:
-                - wordGuide extraction rules:
-                  * Thai -> Korean: Extract Thai words from INPUT TEXT
-                  * Korean -> Thai: Extract Thai words from TRANSLATED TEXT
-                  * English -> Korean: Extract English words from INPUT TEXT
-                  * Korean -> English: Extract English words from TRANSLATED TEXT
-                  * Thai -> English: Extract Thai words from INPUT TEXT
-                  * English -> Thai: Extract Thai words from TRANSLATED TEXT
-                - wordGuide should contain as many important words/expressions as possible (minimum 8-15 items, more for longer texts).
-                - Include all significant vocabulary: nouns, verbs, adjectives, phrases, idioms, and key expressions.
-                - Prioritize words that are commonly used, culturally significant, or difficult to understand.
-                - ALWAYS provide Korean meanings for all extracted words.
-                - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
-                `;
-        }
-
-        async function translateShortText(text, outputText, spinner, errorLog) {
-            try {
-                const prompt = buildTranslationPrompt(text, state.sourceLang, state.targetLang, state.tone);
-                const result = await callTranslationAPI(prompt, state.apiKey || defaultApiKey);
-
-                if (!result.translatedText || !result.detectedSource) {
-                    throw new Error("Invalid translation result format");
-                }
-
-                // Ensure wordGuide exists (backward compatibility)
-                if (!result.wordGuide) {
-                    result.wordGuide = [];
-                }
-
-                // Display results
-                displayTranslationResult(result, outputText, spinner);
-
-                // Display word guide
-                let wordGuideTargetLang = state.targetLang;
-                if (wordGuideTargetLang === 'auto') {
-                    wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
-                }
-                displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
-
-                // Play TTS
-                let ttsLang = state.targetLang;
-                if (ttsLang === 'auto') {
-                    ttsLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
-                }
-                state.lastLang = ttsLang;
-                playTTS(result.translatedText, ttsLang);
-
-            } catch (error) {
-                throw error; // 상위 함수에서 처리
-            }
-        }
-
-        async function callTranslationAPI(prompt, apiKey) {
-            const apiLLM = `${CONFIG.API_BASE_URL}/${CONFIG.MODEL_NAME}:generateContent?key=${apiKey}`;
-
-            const response = await fetch(apiLLM, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) throw new Error("API Key Invalid (401)");
-                throw new Error(`API Request Failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
-                throw new Error("Invalid API response format");
-            }
-
-            const result = JSON.parse(data.candidates[0].content.parts[0].text);
-            return result;
-        }
-
-        function displayTranslationResult(result, outputText, spinner) {
-            spinner.classList.add('hidden');
-            outputText.innerText = result.translatedText;
-            const detectedLabel = document.getElementById('detected-lang-label');
-            if (detectedLabel) detectedLabel.innerText = result.detectedSource.toUpperCase();
-            state.lastResult = result.translatedText;
-        }
-
-        // BROWSER TTS (Native) - V7 Logic Restored
-        function playTTS(text, lang) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-
-            if (lang === 'th') u.lang = 'th-TH';
-            else if (lang === 'ko') u.lang = 'ko-KR';
-            else if (lang === 'en') u.lang = 'en-US';
-            else u.lang = 'th-TH';
-
-            u.rate = 0.9;
-            window.speechSynthesis.speak(u);
-        }
-
-        function copyResult() {
-            navigator.clipboard.writeText(state.lastResult);
-            showToast(I18N[state.uiLang].copied);
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-
-            if (!toast || !toastMessage) return;
-
-            // 기존 애니메이션 클래스 제거
-            toast.classList.remove('show', 'hide', 'hidden');
-
-            toastMessage.textContent = message;
-            toast.classList.add('show');
-
-            // 3초 후 페이드아웃 애니메이션과 함께 숨김
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.classList.add('hide');
-
-                // 애니메이션 완료 후 완전히 숨김
-                setTimeout(() => {
-                    toast.classList.add('hidden');
-                    toast.classList.remove('hide');
-                }, 300); // 애니메이션 시간과 동일
-            }, 3000);
-        }
-
-        // --- WORD GUIDE FUNCTIONS ---
-        function displayWordGuide(wordGuide, detectedSource, targetLang) {
-            const wordGuideSection = document.getElementById('word-guide-section');
-            const wordGuideContent = document.getElementById('word-guide-content');
-
-            if (!wordGuideSection || !wordGuideContent) return;
-
-            // Hide if no word guide
-            if (!wordGuide || !Array.isArray(wordGuide) || wordGuide.length === 0) {
-                wordGuideSection.classList.add('hidden');
-                return;
-            }
-
-            // Show section
-            wordGuideSection.classList.remove('hidden');
-            wordGuideContent.classList.add('hidden'); // Start collapsed
-
-            // Clear previous content
-            wordGuideContent.innerHTML = '';
-
-            // Determine if we should show pronunciation (for Thai words)
-            // 태국어 단어가 포함되어 있으면 발음 표시 (원문 또는 번역 결과)
-            const hasThaiWords = detectedSource === 'th' || targetLang === 'th';
-
-            // Create word guide items
-            wordGuide.forEach((item, index) => {
-                const wordItem = document.createElement('div');
-                wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
-
-                // 태국어 단어와 발음을 함께 표시: "태국어 단어 (한국어 발음)"
-                const wordDisplay = hasThaiWords && item.pronunciation
-                    ? `${item.word || ''} <span class="text-blue-300 font-medium">(${item.pronunciation})</span>`
-                    : item.word || '';
-
-                wordItem.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <span class="text-blue-400 font-bold text-xs min-w-[24px]">${index + 1}.</span>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-bold text-white text-sm">${wordDisplay}</span>
-                            </div>
-                            <div class="text-gray-300 text-xs mb-1">
-                                <span class="text-gray-500">${I18N[state.uiLang].meaning}:</span> ${item.meaning || ''}
-                            </div>
-                            ${item.example ? `
-                                <div class="text-gray-400 text-xs italic mt-1">
-                                    <span class="text-gray-500">${I18N[state.uiLang].example}:</span> ${item.example}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                wordGuideContent.appendChild(wordItem);
-            });
-
-            // Update i18n text
-            const toggleText = document.getElementById('word-guide-toggle-text');
-            if (toggleText && I18N[state.uiLang].wordGuide) {
-                toggleText.innerText = I18N[state.uiLang].wordGuide;
-            }
-        }
-
-        function toggleWordGuide() {
-            const wordGuideContent = document.getElementById('word-guide-content');
-            const wordGuideIcon = document.getElementById('word-guide-icon');
-
-            if (!wordGuideContent || !wordGuideIcon) return;
-
-            const isHidden = wordGuideContent.classList.contains('hidden');
-
-            if (isHidden) {
-                wordGuideContent.classList.remove('hidden');
-                wordGuideIcon.classList.remove('fa-chevron-down');
-                wordGuideIcon.classList.add('fa-chevron-up');
-            } else {
-                wordGuideContent.classList.add('hidden');
-                wordGuideIcon.classList.remove('fa-chevron-up');
-                wordGuideIcon.classList.add('fa-chevron-down');
-            }
-        }
-
-
-
-    </script>
+    <!-- JavaScript 파일 로드 -->
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/ui.js"></script>
 </body>
 
 </html>
