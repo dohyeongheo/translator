@@ -421,16 +421,16 @@
                     <!-- OCR 진행 상태 -->
                     <div id="ocr-progress"
                         class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
-                    <div class="text-center text-white">
-                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p class="text-sm mb-2">이미지에서 텍스트 추출 중...</p>
-                        <div class="w-64 bg-gray-700 rounded-full h-2">
-                            <div id="ocr-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all"
-                                style="width: 0%"></div>
+                        <div class="text-center text-white">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p class="text-sm mb-2">이미지에서 텍스트 추출 중...</p>
+                            <div class="w-64 bg-gray-700 rounded-full h-2">
+                                <div id="ocr-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all"
+                                    style="width: 0%"></div>
+                            </div>
+                            <p id="ocr-progress-text" class="text-xs text-gray-400 mt-2">0%</p>
                         </div>
-                        <p id="ocr-progress-text" class="text-xs text-gray-400 mt-2">0%</p>
                     </div>
-                </div>
 
                     <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
                         <i class="fas fa-times-circle text-xl"></i>
@@ -519,6 +519,12 @@
 
     <script>
         // --- CONFIG ---
+        const CONFIG = {
+            API_BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
+            MODEL_NAME: 'gemini-2.5-flash-preview-09-2025',
+            DESKTOP_BREAKPOINT: 768
+        };
+        
         const defaultApiKey = "";
 
         // --- I18N DATA ---
@@ -569,50 +575,24 @@
         // --- DEVICE DETECTION ---
         function detectDevice() {
             const width = window.innerWidth;
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            const userAgent = navigator.userAgent.toLowerCase();
-            const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            const isDesktop = width >= CONFIG.DESKTOP_BREAKPOINT;
 
-            // 화면 크기를 우선시하여 판단 (큰 화면은 항상 desktop으로 처리)
-            // width >= 768: desktop 스타일 적용 (태블릿/큰 화면 모바일 포함)
-            // width < 768: mobile 스타일 적용
-            if (width >= 768) {
-                state.isMobile = false;
-                state.isDesktop = true;
-            } else {
-                state.isMobile = true;
-                state.isDesktop = false;
-            }
+            state.isMobile = !isDesktop;
+            state.isDesktop = isDesktop;
 
-            // body에 클래스 추가/제거 (항상 하나는 추가되도록 보장)
-            document.body.classList.remove('is-mobile', 'is-desktop');
-            if (state.isMobile) {
-                document.body.classList.add('is-mobile');
-            } else {
-                document.body.classList.add('is-desktop');
-            }
+            // body에 클래스 추가/제거
+            document.body.classList.toggle('is-mobile', state.isMobile);
+            document.body.classList.toggle('is-desktop', state.isDesktop);
 
             // 컨테이너 너비 조정 (CSS 미디어 쿼리가 처리하므로 클래스만 제거)
             const container = document.querySelector('.container-wrapper');
             if (container) {
+                container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
                 if (state.isMobile) {
-                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
                     container.classList.add('max-w-full');
                 } else {
-                    // PC에서는 CSS 미디어 쿼리가 max-width를 설정하므로 Tailwind 클래스 제거
-                    container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
-                    // PC 레이아웃 강제 적용
                     container.style.maxWidth = '';
                 }
-            }
-
-            // 디버깅: PC 레이아웃 확인
-            if (state.isDesktop) {
-                console.log('PC 레이아웃 적용됨:', {
-                    width: width,
-                    containerWidth: container ? container.offsetWidth : 'N/A',
-                    isDesktop: state.isDesktop
-                });
             }
         }
 
@@ -741,43 +721,38 @@
             spinner.classList.remove('hidden');
             errorLog.classList.add('hidden');
 
-            // 긴 텍스트 분할 처리 (800자 이상)
-            const CHUNK_SIZE = 800;
-            const shouldSplit = text.length > CHUNK_SIZE;
-
             try {
-                if (shouldSplit) {
-                    // 긴 텍스트는 분할하여 병렬 처리
-                    await translateLongText(text, outputText, spinner, errorLog);
-                } else {
-                    // 짧은 텍스트는 기존 방식
-                    await translateShortText(text, outputText, spinner, errorLog);
-                }
+                await translateShortText(text, outputText, spinner, errorLog);
             } catch (error) {
-                console.error(error);
-                spinner.classList.add('hidden');
-                outputText.innerText = I18N[state.uiLang].error;
-                errorLog.innerText = `Error: ${error.message}`;
-                errorLog.classList.remove('hidden');
-                if (error.message.includes("401")) {
-                    setTimeout(() => toggleSettings(), 1500);
-                }
+                handleTranslationError(error, spinner, outputText, errorLog);
             }
         }
 
-        async function translateShortText(text, outputText, spinner, errorLog) {
-            try {
-                // FIXED PERSONA: Always Male Boss
-                let personaDesc = "Gender: Male. ";
-                if (state.tone === 'polite') personaDesc += "Tone: Very Polite & Formal. ";
-                if (state.tone === 'normal') personaDesc += "Tone: Standard/Neutral. ";
-                if (state.tone === 'casual') personaDesc += "Tone: Casual/Friendly. ";
-                if (state.tone === 'playful') personaDesc += "Tone: Witty, Playful. ";
+        function handleTranslationError(error, spinner, outputText, errorLog) {
+            spinner.classList.add('hidden');
+            outputText.innerText = I18N[state.uiLang].error;
+            errorLog.innerText = `Error: ${error.message}`;
+            errorLog.classList.remove('hidden');
+            if (error.message.includes("401")) {
+                setTimeout(() => toggleSettings(), 1500);
+            }
+        }
 
-                const prompt = `
+        function buildPersonaDescription(tone) {
+            let personaDesc = "Gender: Male. ";
+            if (tone === 'polite') personaDesc += "Tone: Very Polite & Formal. ";
+            else if (tone === 'normal') personaDesc += "Tone: Standard/Neutral. ";
+            else if (tone === 'casual') personaDesc += "Tone: Casual/Friendly. ";
+            else if (tone === 'playful') personaDesc += "Tone: Witty, Playful. ";
+            return personaDesc;
+        }
+
+        function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
+            const personaDesc = buildPersonaDescription(tone);
+            return `
                 Role: Expert AI Interpreter.
                 Input: "${text}"
-                Config: Source=${state.sourceLang}, Target=${state.targetLang}
+                Config: Source=${sourceLang}, Target=${targetLang}
                 Persona: ${personaDesc}
 
                 Rules:
@@ -786,14 +761,17 @@
                 3. If input is Thai/English -> Translate to Korean.
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
-                6. Extract as many important words/expressions as possible from the TRANSLATED TEXT (not the input text) and provide Korean meanings.
-                   - IMPORTANT: Extract words from the translatedText, NOT from the input text
+                6. Extract important words/expressions based on the following rules and provide Korean meanings:
+                   - If source is Thai (th) -> Extract from INPUT TEXT (Thai words)
+                   - If target is Thai (th) -> Extract from TRANSLATED TEXT (Thai words)
+                   - If source is English (en) -> Extract from INPUT TEXT (English words)
+                   - If target is English (en) -> Extract from TRANSLATED TEXT (English words)
                    - For short texts (under 50 words): extract at least 5-8 words/expressions
                    - For medium texts (50-200 words): extract at least 10-15 words/expressions
                    - For long texts (over 200 words): extract at least 15-20 words/expressions or more
                    - Include all significant nouns, verbs, adjectives, phrases, and idiomatic expressions
-                7. If source language is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
-                   - If target language is Thai (th), add "pronunciation" field for each Thai word in the translated text.
+                7. Add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
+                   - If wordGuide contains Thai words (from source or target), ALWAYS include pronunciation field.
 
                 Output JSON ONLY: {
                     "detectedSource": "LANG_CODE",
@@ -822,30 +800,13 @@
                 - ALWAYS provide Korean meanings for all extracted words.
                 - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
                 `;
+        }
 
-                const currentKey = state.apiKey || defaultApiKey;
-                const apiLLM = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`;
-
-                const response = await fetch(apiLLM, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) throw new Error("API Key Invalid (401)");
-                    throw new Error(`API Request Failed: ${response.status}`);
-                }
-
-                const data = await response.json();
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
-                    throw new Error("Invalid API response format");
-                }
-
-                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+        async function translateShortText(text, outputText, spinner, errorLog) {
+            try {
+                const prompt = buildTranslationPrompt(text, state.sourceLang, state.targetLang, state.tone);
+                const result = await callTranslationAPI(prompt, state.apiKey || defaultApiKey);
+                
                 if (!result.translatedText || !result.detectedSource) {
                     throw new Error("Invalid translation result format");
                 }
@@ -855,29 +816,22 @@
                     result.wordGuide = [];
                 }
 
-                spinner.classList.add('hidden');
-                outputText.innerText = result.translatedText;
-                const detectedLabel = document.getElementById('detected-lang-label');
-                if (detectedLabel) detectedLabel.innerText = result.detectedSource.toUpperCase();
-
-                state.lastResult = result.translatedText;
-
-                // Display word guide if available
-                // detectedSource와 targetLang을 전달하여 어떤 언어의 단어를 표시할지 결정
+                // Display results
+                displayTranslationResult(result, outputText, spinner);
+                
+                // Display word guide
                 let wordGuideTargetLang = state.targetLang;
                 if (wordGuideTargetLang === 'auto') {
                     wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
                 }
                 displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
 
-                // Determine target language for TTS
+                // Play TTS
                 let ttsLang = state.targetLang;
                 if (ttsLang === 'auto') {
                     ttsLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
                 }
                 state.lastLang = ttsLang;
-
-                // Use Browser Native TTS (Fast & Reliable)
                 playTTS(result.translatedText, ttsLang);
 
             } catch (error) {
@@ -885,10 +839,38 @@
             }
         }
 
-        async function translateLongText(text, outputText, spinner, errorLog) {
-            // 긴 텍스트는 전체를 한 번에 처리 (wordGuide를 위해)
-            // Gemini API는 충분히 긴 텍스트를 처리할 수 있으므로 translateShortText와 동일하게 처리
-            await translateShortText(text, outputText, spinner, errorLog);
+        async function callTranslationAPI(prompt, apiKey) {
+            const apiLLM = `${CONFIG.API_BASE_URL}/${CONFIG.MODEL_NAME}:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiLLM, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("API Key Invalid (401)");
+                throw new Error(`API Request Failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+                throw new Error("Invalid API response format");
+            }
+
+            const result = JSON.parse(data.candidates[0].content.parts[0].text);
+            return result;
+        }
+
+        function displayTranslationResult(result, outputText, spinner) {
+            spinner.classList.add('hidden');
+            outputText.innerText = result.translatedText;
+            const detectedLabel = document.getElementById('detected-lang-label');
+            if (detectedLabel) detectedLabel.innerText = result.detectedSource.toUpperCase();
+            state.lastResult = result.translatedText;
         }
 
         // BROWSER TTS (Native) - V7 Logic Restored
@@ -1181,76 +1163,6 @@
             return langMap[state.sourceLang] || 'kor+eng+tha';
         }
 
-        // --- TRANSLATION SPEED IMPROVEMENT ---
-        function splitTextIntoChunks(text, maxLength = 500) {
-            // 문장 단위로 분할
-            const sentences = text.match(/[^.!?。！？]+[.!?。！？]+/g) || [text];
-            const chunks = [];
-            let currentChunk = '';
-
-            sentences.forEach(sentence => {
-                if ((currentChunk + sentence).length <= maxLength) {
-                    currentChunk += sentence;
-                } else {
-                    if (currentChunk.trim()) chunks.push(currentChunk.trim());
-                    currentChunk = sentence;
-                }
-            });
-
-            if (currentChunk.trim()) chunks.push(currentChunk.trim());
-
-            return chunks.length > 0 ? chunks : [text];
-        }
-
-        async function translateChunk(chunk, index, total) {
-            let personaDesc = "Gender: Male. ";
-            if (state.tone === 'polite') personaDesc += "Tone: Very Polite & Formal. ";
-            if (state.tone === 'normal') personaDesc += "Tone: Standard/Neutral. ";
-            if (state.tone === 'casual') personaDesc += "Tone: Casual/Friendly. ";
-            if (state.tone === 'playful') personaDesc += "Tone: Witty, Playful. ";
-
-            const prompt = `
-                Role: Expert AI Interpreter.
-                Input: "${chunk}"
-                Config: Source=${state.sourceLang}, Target=${state.targetLang}
-                Persona: ${personaDesc}
-
-                Rules:
-                1. If Source is 'auto', detect language.
-                2. Map languages: ko=Korean, th=Thai, en=English.
-                3. If input is Thai/English -> Translate to Korean.
-                4. If input is Korean -> Translate to Target (Default Thai).
-                5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
-
-                Output JSON ONLY: {
-                    "translatedText": "TEXT"
-                }
-                `;
-
-            const currentKey = state.apiKey || defaultApiKey;
-            const apiLLM = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`;
-
-            const response = await fetch(apiLLM, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`API Request Failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
-                throw new Error("Invalid API response format");
-            }
-
-            const result = JSON.parse(data.candidates[0].content.parts[0].text);
-            return result.translatedText || '';
-        }
 
     </script>
 </body>
