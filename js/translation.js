@@ -50,13 +50,14 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
         7. Add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
            - If wordGuide contains Thai words (from source or target), ALWAYS include pronunciation field.
         8. ALWAYS provide "example" field for EVERY word/expression in wordGuide.
-           - Example format: "해당 언어 원문 (한국어 발음, 한국어 의미)"
-           - Example must show the original word/expression in its source language, followed by Korean pronunciation and meaning in parentheses
-           - For Thai words extracted from input: "태국어 원문 (한국어 발음, 한국어 의미)"
-           - For Thai words extracted from translation: "태국어 원문 (한국어 발음, 한국어 의미)"
-           - For English words: "English 원문 (한국어 발음, 한국어 의미)"
-           - For Korean words: "한국어 원문 (한국어 의미)" - pronunciation not needed for Korean words
-           - Always use the exact original word/expression from the text, then add Korean pronunciation and meaning
+           - Example format: "단어가 사용된 표현/문장 (한국어 발음, 한국어 의미)"
+           - Example must show a natural sentence or phrase that uses the word/expression in context
+           - The example sentence should be in the original language (source language for words from input, target language for words from translation)
+           - After the example sentence, add Korean pronunciation and meaning in parentheses
+           - Format: "원문 표현/문장 (한국어 발음, 한국어 의미)"
+           - For Thai words: "태국어 문장 (한국어 발음, 한국어 의미)"
+           - For English words: "English sentence (한국어 발음, 한국어 의미)"
+           - For Korean words: "한국어 문장 (한국어 의미)" - pronunciation not needed for Korean
            - Example is REQUIRED, not optional - provide it for ALL items in wordGuide
 
         Output JSON ONLY: {
@@ -67,7 +68,7 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
                     "word": "원문단어",
                     "meaning": "한국어 의미",
                     "pronunciation": "한글발음 (원문이 태국어일 때만)",
-                    "example": "예문 (필수 - 형식: 해당 언어 원문 (한국어 발음, 한국어 의미))"
+                    "example": "예문 (필수 - 형식: 단어가 사용된 표현/문장 (한국어 발음, 한국어 의미))"
                 }
             ]
         }
@@ -86,12 +87,13 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
         - ALWAYS provide Korean meanings for all extracted words.
         - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
         - ALWAYS provide "example" field for EVERY word/expression - this is REQUIRED, not optional.
-        - Example format: "해당 언어 원문 (한국어 발음, 한국어 의미)"
-        - Example must show the original word/expression in its source language, then add Korean pronunciation and meaning in parentheses.
-        - Use the exact original word/expression as it appears in the text (Thai, English, or Korean).
-        - For Thai words: "태국어 원문 (한국어 발음, 한국어 의미)" - include both pronunciation and meaning.
-        - For English words: "English 원문 (한국어 발음, 한국어 의미)" - include both pronunciation and meaning.
-        - For Korean words: "한국어 원문 (한국어 의미)" - only meaning is needed (pronunciation not required).
+        - Example format: "단어가 사용된 표현/문장 (한국어 발음, 한국어 의미)"
+        - Example must be a natural sentence or phrase that demonstrates how the word/expression is used in context.
+        - The example sentence should be in the original language (source language for words from input, target language for words from translation).
+        - After the example sentence, provide Korean pronunciation and meaning in parentheses.
+        - For Thai words: Show a Thai sentence using the word, then "(한국어 발음, 한국어 의미)"
+        - For English words: Show an English sentence using the word, then "(한국어 발음, 한국어 의미)"
+        - For Korean words: Show a Korean sentence using the word, then "(한국어 의미)" - pronunciation not needed.
         `;
 }
 
