@@ -10,8 +10,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Sarabun:wght@400;700&display=swap"
         rel="stylesheet">
-    <!-- Tesseract.js for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
     <style>
         body {
@@ -415,51 +413,11 @@
 
             <!-- Input Area -->
             <div class="space-y-2">
-                <!-- 버튼 그룹 (입력창 위에 별도 영역) -->
-                <div class="flex gap-2">
-                    <!-- 음성 입력 버튼 -->
-                    <button onclick="startVoiceInput()" id="voice-input-btn"
-                        class="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-blue-400 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                        title="음성 입력">
-                        <i class="fas fa-microphone"></i>
-                        <span class="text-xs">음성 입력</span>
-                    </button>
-
-                    <!-- 이미지 업로드 버튼 -->
-                    <button onclick="document.getElementById('image-input').click()"
-                        class="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-green-400 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                        title="이미지에서 텍스트 추출">
-                        <i class="fas fa-image"></i>
-                        <span class="text-xs">이미지</span>
-                    </button>
-                </div>
-                <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-
                 <!-- 입력창 -->
                 <div class="relative">
                     <textarea id="input-text"
                         class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
                         placeholder="여기에 내용을 입력하세요..."></textarea>
-
-                    <!-- 음성 입력 상태 표시 -->
-                    <div id="voice-status"
-                        class="hidden absolute top-2 right-2 text-xs text-blue-400 flex items-center gap-1 bg-gray-800/90 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-blue-500/30">
-                        <i class="fas fa-circle animate-pulse"></i> <span>듣는 중...</span>
-                    </div>
-
-                    <!-- OCR 진행 상태 -->
-                    <div id="ocr-progress"
-                        class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
-                        <div class="text-center text-white">
-                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                            <p class="text-sm mb-2">이미지에서 텍스트 추출 중...</p>
-                            <div class="w-64 bg-gray-700 rounded-full h-2">
-                                <div id="ocr-progress-bar" class="bg-blue-500 h-2 rounded-full transition-all"
-                                    style="width: 0%"></div>
-                            </div>
-                            <p id="ocr-progress-text" class="text-xs text-gray-400 mt-2">0%</p>
-                        </div>
-                    </div>
 
                     <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
                         <i class="fas fa-times-circle text-xl"></i>
@@ -573,7 +531,6 @@
                 placeholder: "여기에 내용을 입력하세요...", translating: "AI 번역 중...",
                 error: "오류 발생! 설정(⚙️)에서 API 키를 확인하세요.", copied: "복사되었습니다!",
                 wordGuide: "단어/표현 안내", word: "단어", meaning: "의미", example: "예문", pronunciation: "발음",
-                voiceInput: "음성 입력", imageInput: "이미지에서 텍스트 추출", listening: "듣는 중...", processing: "처리 중..."
             },
             th: {
                 auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
@@ -581,7 +538,6 @@
                 placeholder: "พิมพ์ข้อความที่นี่...", translating: "กำลังแปล...",
                 error: "เกิดข้อผิดพลาด! โปรดตรวจสอบ API Key", copied: "คัดลอกแล้ว!",
                 wordGuide: "คำแนะนำคำศัพท์", word: "คำ", meaning: "ความหมาย", example: "ตัวอย่าง", pronunciation: "การออกเสียง",
-                voiceInput: "ป้อนเสียง", imageInput: "ดึงข้อความจากรูปภาพ", listening: "กำลังฟัง...", processing: "กำลังประมวลผล..."
             },
             en: {
                 auto: "Auto", ko: "Korean", th: "Thai", en: "English",
@@ -589,7 +545,6 @@
                 placeholder: "Type here...", translating: "Translating...",
                 error: "Error! Check API Key in Settings.", copied: "Copied!",
                 wordGuide: "Word Guide", word: "Word", meaning: "Meaning", example: "Example", pronunciation: "Pronunciation",
-                voiceInput: "Voice Input", imageInput: "Extract Text from Image", listening: "Listening...", processing: "Processing..."
             }
         };
 
@@ -606,10 +561,6 @@
             isDesktop: false
         };
 
-        // --- VOICE RECOGNITION STATE ---
-        let recognition = null;
-        let isListening = false;
-        let lastResultIndex = -1; // 마지막 처리된 결과 인덱스 추적
 
         // --- DEVICE DETECTION ---
         function detectDevice() {
@@ -1037,220 +988,6 @@
             }
         }
 
-        // --- VOICE INPUT FUNCTIONS ---
-        function initSpeechRecognition() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                console.warn('Speech recognition not supported');
-                return null;
-            }
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-
-            // 설정
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = getRecognitionLanguage();
-
-            // 이벤트 핸들러
-            recognition.onstart = () => {
-                isListening = true;
-                lastResultIndex = -1; // 인식 시작 시 인덱스 초기화
-                const voiceStatus = document.getElementById('voice-status');
-                if (voiceStatus) voiceStatus.classList.remove('hidden');
-                updateVoiceButton(true);
-            };
-
-            recognition.onresult = (event) => {
-                let finalTranscript = '';
-
-                // 중복 방지: 마지막 처리된 인덱스 이후의 결과만 처리
-                const startIndex = Math.max(event.resultIndex, lastResultIndex + 1);
-                
-                for (let i = startIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + ' ';
-                        lastResultIndex = i; // 처리된 인덱스 업데이트
-                    }
-                }
-
-                if (finalTranscript) {
-                    const inputText = document.getElementById('input-text');
-                    const currentText = inputText.value;
-                    inputText.value = (currentText + finalTranscript).trim();
-                }
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                stopVoiceInput();
-                if (event.error === 'no-speech') {
-                    // 음성이 없을 때는 조용히 종료
-                    return;
-                }
-                alert('음성 인식 오류: ' + event.error);
-            };
-
-            recognition.onend = () => {
-                isListening = false;
-                lastResultIndex = -1; // 인식 종료 시 인덱스 초기화
-                const voiceStatus = document.getElementById('voice-status');
-                if (voiceStatus) voiceStatus.classList.add('hidden');
-                updateVoiceButton(false);
-            };
-
-            return recognition;
-        }
-
-        function startVoiceInput() {
-            if (!recognition) {
-                recognition = initSpeechRecognition();
-                if (!recognition) {
-                    alert('이 브라우저는 음성 인식을 지원하지 않습니다.\nChrome 또는 Edge 브라우저를 사용해주세요.');
-                    return;
-                }
-            }
-
-            if (isListening) {
-                stopVoiceInput();
-            } else {
-                recognition.lang = getRecognitionLanguage();
-                try {
-                    recognition.start();
-                } catch (error) {
-                    console.error('Failed to start recognition:', error);
-                    alert('음성 인식을 시작할 수 없습니다.');
-                }
-            }
-        }
-
-        function stopVoiceInput() {
-            if (recognition && isListening) {
-                recognition.stop();
-            }
-        }
-
-        function getRecognitionLanguage() {
-            const langMap = {
-                'ko': 'ko-KR',
-                'th': 'th-TH',
-                'en': 'en-US',
-                'auto': 'ko-KR'
-            };
-
-            return langMap[state.sourceLang] || 'ko-KR';
-        }
-
-        function updateVoiceButton(listening) {
-            const btn = document.getElementById('voice-input-btn');
-            const btnText = btn?.querySelector('span');
-            const btnIcon = btn?.querySelector('i');
-            
-            if (btn) {
-                if (listening) {
-                    // 정지 상태로 변경
-                    btn.classList.remove('text-gray-600', 'hover:text-blue-400');
-                    btn.classList.add('text-red-500', 'animate-pulse');
-                    if (btnIcon) {
-                        btnIcon.classList.remove('fa-microphone');
-                        btnIcon.classList.add('fa-stop');
-                    }
-                    if (btnText) {
-                        btnText.textContent = '음성 정지';
-                    }
-                } else {
-                    // 시작 상태로 변경
-                    btn.classList.remove('text-red-500', 'animate-pulse');
-                    btn.classList.add('text-gray-600', 'hover:text-blue-400');
-                    if (btnIcon) {
-                        btnIcon.classList.remove('fa-stop');
-                        btnIcon.classList.add('fa-microphone');
-                    }
-                    if (btnText) {
-                        btnText.textContent = '음성 입력';
-                    }
-                }
-            }
-        }
-
-        // --- OCR FUNCTIONS ---
-        async function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // 파일 크기 제한 (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('이미지 크기는 10MB 이하여야 합니다.');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const imageUrl = e.target.result;
-                await performOCR(imageUrl);
-            };
-
-            reader.readAsDataURL(file);
-        }
-
-        async function performOCR(imageUrl) {
-            const ocrProgress = document.getElementById('ocr-progress');
-            const ocrProgressBar = document.getElementById('ocr-progress-bar');
-            const ocrProgressText = document.getElementById('ocr-progress-text');
-
-            if (!ocrProgress || !ocrProgressBar || !ocrProgressText) return;
-
-            ocrProgress.classList.remove('hidden');
-            ocrProgressBar.style.width = '0%';
-            ocrProgressText.textContent = '0%';
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(
-                    imageUrl,
-                    getOCRLanguage(),
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const progress = Math.round(m.progress * 100);
-                                ocrProgressBar.style.width = progress + '%';
-                                ocrProgressText.textContent = progress + '%';
-                            }
-                        }
-                    }
-                );
-
-                // 추출된 텍스트를 입력창에 추가
-                const inputText = document.getElementById('input-text');
-                const currentText = inputText.value.trim();
-                const extractedText = text.trim();
-
-                if (extractedText) {
-                    inputText.value = currentText ? (currentText + '\n\n' + extractedText) : extractedText;
-                } else {
-                    alert('이미지에서 텍스트를 찾을 수 없습니다.');
-                }
-
-            } catch (error) {
-                console.error('OCR Error:', error);
-                alert('이미지에서 텍스트를 추출하는데 실패했습니다: ' + error.message);
-            } finally {
-                ocrProgress.classList.add('hidden');
-                // 파일 입력 초기화
-                document.getElementById('image-input').value = '';
-            }
-        }
-
-        function getOCRLanguage() {
-            const langMap = {
-                'ko': 'kor',
-                'th': 'tha',
-                'en': 'eng',
-                'auto': 'kor+eng+tha'
-            };
-
-            return langMap[state.sourceLang] || 'kor+eng+tha';
-        }
 
 
     </script>
