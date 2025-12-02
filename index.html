@@ -107,6 +107,7 @@
             from {
                 opacity: 0;
             }
+
             to {
                 opacity: 1;
             }
@@ -116,6 +117,7 @@
             from {
                 opacity: 1;
             }
+
             to {
                 opacity: 0;
             }
@@ -520,7 +522,8 @@
 
     <!-- Toast Notification -->
     <div id="toast" class="hidden fixed bottom-6 right-6 z-50">
-        <div class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3">
+        <div
+            class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3">
             <i class="fas fa-check-circle text-green-400"></i>
             <span id="toast-message" class="text-sm font-medium"></span>
         </div>
@@ -606,6 +609,7 @@
         // --- VOICE RECOGNITION STATE ---
         let recognition = null;
         let isListening = false;
+        let lastResultIndex = -1; // 마지막 처리된 결과 인덱스 추적
 
         // --- DEVICE DETECTION ---
         function detectDevice() {
@@ -1051,6 +1055,7 @@
             // 이벤트 핸들러
             recognition.onstart = () => {
                 isListening = true;
+                lastResultIndex = -1; // 인식 시작 시 인덱스 초기화
                 const voiceStatus = document.getElementById('voice-status');
                 if (voiceStatus) voiceStatus.classList.remove('hidden');
                 updateVoiceButton(true);
@@ -1059,10 +1064,14 @@
             recognition.onresult = (event) => {
                 let finalTranscript = '';
 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
+                // 중복 방지: 마지막 처리된 인덱스 이후의 결과만 처리
+                const startIndex = Math.max(event.resultIndex, lastResultIndex + 1);
+                
+                for (let i = startIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript + ' ';
+                        lastResultIndex = i; // 처리된 인덱스 업데이트
                     }
                 }
 
@@ -1085,6 +1094,7 @@
 
             recognition.onend = () => {
                 isListening = false;
+                lastResultIndex = -1; // 인식 종료 시 인덱스 초기화
                 const voiceStatus = document.getElementById('voice-status');
                 if (voiceStatus) voiceStatus.classList.add('hidden');
                 updateVoiceButton(false);
@@ -1134,13 +1144,32 @@
 
         function updateVoiceButton(listening) {
             const btn = document.getElementById('voice-input-btn');
+            const btnText = btn?.querySelector('span');
+            const btnIcon = btn?.querySelector('i');
+            
             if (btn) {
                 if (listening) {
+                    // 정지 상태로 변경
                     btn.classList.remove('text-gray-600', 'hover:text-blue-400');
                     btn.classList.add('text-red-500', 'animate-pulse');
+                    if (btnIcon) {
+                        btnIcon.classList.remove('fa-microphone');
+                        btnIcon.classList.add('fa-stop');
+                    }
+                    if (btnText) {
+                        btnText.textContent = '음성 정지';
+                    }
                 } else {
+                    // 시작 상태로 변경
                     btn.classList.remove('text-red-500', 'animate-pulse');
                     btn.classList.add('text-gray-600', 'hover:text-blue-400');
+                    if (btnIcon) {
+                        btnIcon.classList.remove('fa-stop');
+                        btnIcon.classList.add('fa-microphone');
+                    }
+                    if (btnText) {
+                        btnText.textContent = '음성 입력';
+                    }
                 }
             }
         }
