@@ -709,17 +709,17 @@
                 4. If input is Korean -> Translate to Target (Default Thai).
                 5. IMPORTANT: Apply the Persona Tone strictly. For Thai, ALWAYS use 'Krub' (Male ending).
                 6. Extract 3-5 important words/expressions from the translated text and provide Korean meanings.
-                7. If translation target is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each word in wordGuide.
+                7. If source language is Thai (th), add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
 
                 Output JSON ONLY: {
                     "detectedSource": "LANG_CODE",
                     "translatedText": "TEXT",
                     "wordGuide": [
-                        { 
-                            "word": "원문단어", 
-                            "meaning": "한국어 의미", 
-                            "pronunciation": "한글발음 (태국어 번역 결과일 때만)", 
-                            "example": "예문 (선택적)" 
+                        {
+                            "word": "원문단어",
+                            "meaning": "한국어 의미",
+                            "pronunciation": "한글발음 (원문이 태국어일 때만)",
+                            "example": "예문 (선택적)"
                         }
                     ]
                 }
@@ -728,7 +728,7 @@
                 - wordGuide should contain 3-5 most important words/expressions. 
                 - If translation is to Korean, provide explanations for difficult Korean words. 
                 - If translation is from Korean, provide meanings of foreign words in Korean.
-                - If target language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each word.
+                - If source language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
                 `;
 
                 const currentKey = state.apiKey || defaultApiKey;
@@ -769,15 +769,10 @@
                 if (detectedLabel) detectedLabel.innerText = result.detectedSource.toUpperCase();
 
                 state.lastResult = result.translatedText;
-                
-                // Determine target language for word guide
-                let wordGuideTargetLang = state.targetLang;
-                if (wordGuideTargetLang === 'auto') {
-                    wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
-                }
-                
+
                 // Display word guide if available
-                displayWordGuide(result.wordGuide, wordGuideTargetLang);
+                // detectedSource를 전달하여 원문이 태국어인지 확인
+                displayWordGuide(result.wordGuide, result.detectedSource);
 
                 // Determine target language for TTS
                 let ttsLang = state.targetLang;
@@ -823,7 +818,7 @@
         }
 
         // --- WORD GUIDE FUNCTIONS ---
-        function displayWordGuide(wordGuide, targetLang) {
+        function displayWordGuide(wordGuide, detectedSource) {
             const wordGuideSection = document.getElementById('word-guide-section');
             const wordGuideContent = document.getElementById('word-guide-content');
 
@@ -842,25 +837,26 @@
             // Clear previous content
             wordGuideContent.innerHTML = '';
 
-            // Check if target language is Thai (for pronunciation display)
-            const isThaiTranslation = targetLang === 'th';
+            // Check if source language is Thai (for pronunciation display)
+            const isThaiSource = detectedSource === 'th';
 
             // Create word guide items
             wordGuide.forEach((item, index) => {
                 const wordItem = document.createElement('div');
                 wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
+                
+                // 태국어 단어와 발음을 함께 표시: "태국어 단어 (한국어 발음)"
+                const wordDisplay = isThaiSource && item.pronunciation 
+                    ? `${item.word || ''} <span class="text-blue-300 font-medium">(${item.pronunciation})</span>`
+                    : item.word || '';
+                
                 wordItem.innerHTML = `
                     <div class="flex items-start gap-3">
                         <span class="text-blue-400 font-bold text-xs min-w-[24px]">${index + 1}.</span>
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="font-bold text-white text-sm">${item.word || ''}</span>
+                                <span class="font-bold text-white text-sm">${wordDisplay}</span>
                             </div>
-                            ${isThaiTranslation && item.pronunciation ? `
-                                <div class="text-blue-300 text-xs mb-1 font-medium">
-                                    <span class="text-gray-500">${I18N[state.uiLang].pronunciation}:</span> ${item.pronunciation}
-                                </div>
-                            ` : ''}
                             <div class="text-gray-300 text-xs mb-1">
                                 <span class="text-gray-500">${I18N[state.uiLang].meaning}:</span> ${item.meaning || ''}
                             </div>
