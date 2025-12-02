@@ -102,6 +102,22 @@
             }
         }
 
+        /* Toast Animation */
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+
         /* 설정 모달 */
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.8);
@@ -491,6 +507,14 @@
         </main>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <div class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3 animate-slide-up">
+            <i class="fas fa-check-circle text-green-400"></i>
+            <span id="toast-message" class="text-sm font-medium"></span>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
         <div
@@ -524,7 +548,7 @@
             MODEL_NAME: 'gemini-2.5-flash-preview-09-2025',
             DESKTOP_BREAKPOINT: 768
         };
-        
+
         const defaultApiKey = "";
 
         // --- I18N DATA ---
@@ -806,7 +830,7 @@
             try {
                 const prompt = buildTranslationPrompt(text, state.sourceLang, state.targetLang, state.tone);
                 const result = await callTranslationAPI(prompt, state.apiKey || defaultApiKey);
-                
+
                 if (!result.translatedText || !result.detectedSource) {
                     throw new Error("Invalid translation result format");
                 }
@@ -818,7 +842,7 @@
 
                 // Display results
                 displayTranslationResult(result, outputText, spinner);
-                
+
                 // Display word guide
                 let wordGuideTargetLang = state.targetLang;
                 if (wordGuideTargetLang === 'auto') {
@@ -889,7 +913,22 @@
 
         function copyResult() {
             navigator.clipboard.writeText(state.lastResult);
-            alert(I18N[state.uiLang].copied);
+            showToast(I18N[state.uiLang].copied);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            if (!toast || !toastMessage) return;
+            
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            
+            // 3초 후 자동으로 숨김
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
         }
 
         // --- WORD GUIDE FUNCTIONS ---
