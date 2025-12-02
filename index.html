@@ -12,7 +12,6 @@
         rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
-</head>
 
 <body class="h-screen flex flex-col overflow-hidden bg-black">
     <div class="container-wrapper h-full flex flex-col">
@@ -32,15 +31,19 @@
                     </button>
                     <!-- UI Language Switcher -->
                     <div class="flex gap-2 bg-black/30 p-1.5 rounded-full" role="group" aria-label="UI 언어 선택">
-                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg" aria-label="한국어" title="한국어">🇰🇷</button>
-                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg" aria-label="태국어" title="태국어">🇹🇭</button>
-                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg" aria-label="영어" title="영어">🇺🇸</button>
+                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg" aria-label="한국어"
+                            title="한국어">🇰🇷</button>
+                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg" aria-label="태국어"
+                            title="태국어">🇹🇭</button>
+                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg" aria-label="영어"
+                            title="영어">🇺🇸</button>
                     </div>
                 </div>
             </div>
 
             <!-- Trans Language Selector -->
-            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2" role="group" aria-label="번역 언어 선택">
+            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2" role="group"
+                aria-label="번역 언어 선택">
                 <div class="flex gap-1" id="source-lang-group" role="group" aria-label="원본 언어">
                     <button data-lang="auto" class="lang-btn active" data-i18n="auto" aria-pressed="true">자동</button>
                     <button data-lang="ko" class="lang-btn" data-i18n="ko" aria-pressed="false">한국어</button>
@@ -94,9 +97,7 @@
                 <div class="relative">
                     <textarea id="input-text"
                         class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
-                        placeholder="여기에 내용을 입력하세요..."
-                        aria-label="번역할 텍스트 입력"
-                        aria-describedby="input-hint"></textarea>
+                        placeholder="여기에 내용을 입력하세요..." aria-label="번역할 텍스트 입력" aria-describedby="input-hint"></textarea>
                     <span id="input-hint" class="sr-only">Ctrl+Enter를 눌러 번역할 수 있습니다</span>
 
                     <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2"
@@ -118,13 +119,12 @@
                         <span id="detected-lang-label"
                             class="text-[10px] font-bold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">DETECTED</span>
                         <div class="flex gap-3">
-                            <button onclick="copyResult()" class="text-gray-500 hover:text-white"
-                                aria-label="결과 복사" title="복사">
+                            <button onclick="copyResult()" class="text-gray-500 hover:text-white" aria-label="결과 복사"
+                                title="복사">
                                 <i class="far fa-copy" aria-hidden="true"></i>
                             </button>
                             <button onclick="playTTS(state.lastResult, state.lastLang)"
-                                class="text-blue-400 hover:text-blue-300"
-                                aria-label="음성 재생" title="음성 재생">
+                                class="text-blue-400 hover:text-blue-300" aria-label="음성 재생" title="음성 재생">
                                 <i id="tts-icon" class="fas fa-volume-high text-xl" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -138,7 +138,8 @@
                             aria-expanded="false" aria-controls="word-guide-content">
                             <i class="fas fa-book text-xs" aria-hidden="true"></i>
                             <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
-                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform" aria-hidden="true"></i>
+                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"
+                                aria-hidden="true"></i>
                         </button>
                         <div id="word-guide-content" class="hidden space-y-2">
                             <!-- Word guide items will be inserted here -->

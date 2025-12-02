@@ -11,6 +11,7 @@ function toggleSettings() {
 
     if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
         // 복호화된 키 표시
         const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
         if (savedKey) {
@@ -26,6 +27,7 @@ function toggleSettings() {
         setTimeout(() => input.focus(), 100);
     } else {
         modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
     }
 }
 
@@ -63,8 +65,10 @@ function setupRadioButtons(groupId, stateKey, dataPath) {
         btn.addEventListener('click', () => {
             container.querySelectorAll('button').forEach(b => {
                 b.classList.remove('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+                b.setAttribute('aria-pressed', 'false');
             });
             btn.classList.add('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+            btn.setAttribute('aria-pressed', 'true');
             const val = dataPath.includes('tone') ? btn.dataset.tone : btn.dataset.lang;
             state[stateKey] = val;
         });
@@ -229,6 +233,7 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
 function toggleWordGuide() {
     const wordGuideContent = document.getElementById('word-guide-content');
     const wordGuideIcon = document.getElementById('word-guide-icon');
+    const toggleButton = document.querySelector('[onclick="toggleWordGuide()"]');
 
     if (!wordGuideContent || !wordGuideIcon) return;
 
@@ -238,10 +243,12 @@ function toggleWordGuide() {
         wordGuideContent.classList.remove('hidden');
         wordGuideIcon.classList.remove('fa-chevron-down');
         wordGuideIcon.classList.add('fa-chevron-up');
+        if (toggleButton) toggleButton.setAttribute('aria-expanded', 'true');
     } else {
         wordGuideContent.classList.add('hidden');
         wordGuideIcon.classList.remove('fa-chevron-up');
         wordGuideIcon.classList.add('fa-chevron-down');
+        if (toggleButton) toggleButton.setAttribute('aria-expanded', 'false');
     }
 }
 
