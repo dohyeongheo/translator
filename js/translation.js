@@ -49,6 +49,11 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
            - Include all significant nouns, verbs, adjectives, phrases, and idiomatic expressions
         7. Add "pronunciation" field with Korean pronunciation (한글 발음) for each Thai word in wordGuide.
            - If wordGuide contains Thai words (from source or target), ALWAYS include pronunciation field.
+        8. ALWAYS provide "example" field for EVERY word/expression in wordGuide.
+           - Example should be a natural sentence using the word/expression in context
+           - Example should be in the ORIGINAL language (source language if extracted from input, target language if extracted from translation)
+           - Example should be clear and demonstrate proper usage of the word/expression
+           - Example is REQUIRED, not optional - provide it for ALL items in wordGuide
 
         Output JSON ONLY: {
             "detectedSource": "LANG_CODE",
@@ -58,7 +63,7 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
                     "word": "원문단어",
                     "meaning": "한국어 의미",
                     "pronunciation": "한글발음 (원문이 태국어일 때만)",
-                    "example": "예문 (선택적)"
+                    "example": "예문 (필수 - 단어/표현을 사용한 자연스러운 문장)"
                 }
             ]
         }
@@ -76,6 +81,9 @@ function buildTranslationPrompt(text, sourceLang, targetLang, tone) {
         - Prioritize words that are commonly used, culturally significant, or difficult to understand.
         - ALWAYS provide Korean meanings for all extracted words.
         - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
+        - ALWAYS provide "example" field for EVERY word/expression - this is REQUIRED, not optional.
+        - Example format: Use the word/expression in a natural sentence that clearly demonstrates its usage.
+        - Example language: Use the original language (source language for words from input, target language for words from translation).
         `;
 }
 
@@ -216,7 +224,7 @@ function handleTranslationError(error, spinner, outputText, errorLog) {
     safeSetText(outputText, I18N[state.uiLang].error);
     safeSetText(errorLog, `Error: ${error.message}`);
     errorLog.classList.remove('hidden');
-    
+
     if (error.message.includes("401")) {
         setTimeout(() => toggleSettings(), 1500);
     } else if (error.message.includes("Network") || error.message.includes("fetch")) {
