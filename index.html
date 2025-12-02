@@ -103,19 +103,34 @@
         }
 
         /* Toast Animation */
-        @keyframes slide-up {
+        @keyframes toast-fade-in {
             from {
                 opacity: 0;
-                transform: translate(-50%, 20px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
-                transform: translate(-50%, 0);
+                transform: translateY(0);
             }
         }
 
-        .animate-slide-up {
-            animation: slide-up 0.3s ease-out;
+        @keyframes toast-fade-out {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        #toast.show {
+            animation: toast-fade-in 0.3s ease-out;
+        }
+
+        #toast.hide {
+            animation: toast-fade-out 0.3s ease-out;
         }
 
         /* 설정 모달 */
@@ -508,8 +523,8 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-        <div class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3 animate-slide-up">
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3">
             <i class="fas fa-check-circle text-green-400"></i>
             <span id="toast-message" class="text-sm font-medium"></span>
         </div>
@@ -922,12 +937,22 @@
             
             if (!toast || !toastMessage) return;
             
-            toastMessage.textContent = message;
-            toast.classList.remove('hidden');
+            // 기존 애니메이션 클래스 제거
+            toast.classList.remove('show', 'hide', 'hidden');
             
-            // 3초 후 자동으로 숨김
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            
+            // 3초 후 페이드아웃 애니메이션과 함께 숨김
             setTimeout(() => {
-                toast.classList.add('hidden');
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                
+                // 애니메이션 완료 후 완전히 숨김
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                    toast.classList.remove('hide');
+                }, 300); // 애니메이션 시간과 동일
             }, 3000);
         }
 
