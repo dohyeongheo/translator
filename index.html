@@ -385,38 +385,42 @@
             </div>
 
             <!-- Input Area -->
-            <div class="relative">
-                <!-- 버튼 그룹 (입력창 위에 배치) -->
-                <div class="absolute top-2 left-2 flex gap-2 z-10">
+            <div class="space-y-2">
+                <!-- 버튼 그룹 (입력창 위에 별도 영역) -->
+                <div class="flex gap-2">
                     <!-- 음성 입력 버튼 -->
                     <button onclick="startVoiceInput()" id="voice-input-btn"
-                        class="bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-blue-400 p-2 rounded-lg transition-colors backdrop-blur-sm"
+                        class="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-blue-400 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                         title="음성 입력">
-                        <i class="fas fa-microphone text-sm"></i>
+                        <i class="fas fa-microphone"></i>
+                        <span class="text-xs">음성 입력</span>
                     </button>
 
                     <!-- 이미지 업로드 버튼 -->
                     <button onclick="document.getElementById('image-input').click()"
-                        class="bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-green-400 p-2 rounded-lg transition-colors backdrop-blur-sm"
+                        class="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-green-400 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                         title="이미지에서 텍스트 추출">
-                        <i class="fas fa-image text-sm"></i>
+                        <i class="fas fa-image"></i>
+                        <span class="text-xs">이미지</span>
                     </button>
                 </div>
                 <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-                
-                <textarea id="input-text"
-                    class="w-full h-32 p-5 pt-12 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
-                    placeholder="여기에 내용을 입력하세요..."></textarea>
 
-                <!-- 음성 입력 상태 표시 -->
-                <div id="voice-status"
-                    class="hidden absolute top-12 left-2 text-xs text-blue-400 flex items-center gap-1 bg-gray-800/80 px-2 py-1 rounded backdrop-blur-sm">
-                    <i class="fas fa-circle animate-pulse"></i> <span>듣는 중...</span>
-                </div>
+                <!-- 입력창 -->
+                <div class="relative">
+                    <textarea id="input-text"
+                        class="w-full h-32 p-5 rounded-2xl toss-input text-lg leading-relaxed resize-none shadow-inner"
+                        placeholder="여기에 내용을 입력하세요..."></textarea>
 
-                <!-- OCR 진행 상태 -->
-                <div id="ocr-progress"
-                    class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
+                    <!-- 음성 입력 상태 표시 -->
+                    <div id="voice-status"
+                        class="hidden absolute top-2 right-2 text-xs text-blue-400 flex items-center gap-1 bg-gray-800/90 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-blue-500/30">
+                        <i class="fas fa-circle animate-pulse"></i> <span>듣는 중...</span>
+                    </div>
+
+                    <!-- OCR 진행 상태 -->
+                    <div id="ocr-progress"
+                        class="hidden absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl backdrop-blur-sm z-10">
                     <div class="text-center text-white">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p class="text-sm mb-2">이미지에서 텍스트 추출 중...</p>
@@ -428,13 +432,14 @@
                     </div>
                 </div>
 
-                <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
-                    <i class="fas fa-times-circle text-xl"></i>
-                </button>
-                <button onclick="executeTranslation()"
-                    class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <i class="fas fa-paper-plane text-lg"></i>
-                </button>
+                    <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </button>
+                    <button onclick="executeTranslation()"
+                        class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-paper-plane text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Result Area -->
@@ -804,14 +809,18 @@
                 }
 
                 Note:
-                - wordGuide should contain words/expressions from the TRANSLATED TEXT, NOT from the input text.
+                - wordGuide extraction rules:
+                  * Thai -> Korean: Extract Thai words from INPUT TEXT
+                  * Korean -> Thai: Extract Thai words from TRANSLATED TEXT
+                  * English -> Korean: Extract English words from INPUT TEXT
+                  * Korean -> English: Extract English words from TRANSLATED TEXT
+                  * Thai -> English: Extract Thai words from INPUT TEXT
+                  * English -> Thai: Extract Thai words from TRANSLATED TEXT
                 - wordGuide should contain as many important words/expressions as possible (minimum 8-15 items, more for longer texts).
                 - Include all significant vocabulary: nouns, verbs, adjectives, phrases, idioms, and key expressions.
                 - Prioritize words that are commonly used, culturally significant, or difficult to understand.
-                - If translation is to Korean, provide explanations for difficult Korean words in the translated text.
-                - If translation is from Korean (e.g., Korean -> Thai), provide meanings of Thai/English words in Korean.
-                - If source language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
-                - If target language is Thai (th), ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word in the translated text.
+                - ALWAYS provide Korean meanings for all extracted words.
+                - If wordGuide contains Thai words, ALWAYS include "pronunciation" field with Korean pronunciation (한글) for each Thai word.
                 `;
 
                 const currentKey = state.apiKey || defaultApiKey;
@@ -854,8 +863,12 @@
                 state.lastResult = result.translatedText;
 
                 // Display word guide if available
-                // detectedSource를 전달하여 원문이 태국어인지 확인
-                displayWordGuide(result.wordGuide, result.detectedSource);
+                // detectedSource와 targetLang을 전달하여 어떤 언어의 단어를 표시할지 결정
+                let wordGuideTargetLang = state.targetLang;
+                if (wordGuideTargetLang === 'auto') {
+                    wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
+                }
+                displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
 
                 // Determine target language for TTS
                 let ttsLang = state.targetLang;
@@ -898,7 +911,7 @@
         }
 
         // --- WORD GUIDE FUNCTIONS ---
-        function displayWordGuide(wordGuide, detectedSource) {
+        function displayWordGuide(wordGuide, detectedSource, targetLang) {
             const wordGuideSection = document.getElementById('word-guide-section');
             const wordGuideContent = document.getElementById('word-guide-content');
 
@@ -917,8 +930,9 @@
             // Clear previous content
             wordGuideContent.innerHTML = '';
 
-            // Check if source language is Thai (for pronunciation display)
-            const isThaiSource = detectedSource === 'th';
+            // Determine if we should show pronunciation (for Thai words)
+            // 태국어 단어가 포함되어 있으면 발음 표시 (원문 또는 번역 결과)
+            const hasThaiWords = detectedSource === 'th' || targetLang === 'th';
 
             // Create word guide items
             wordGuide.forEach((item, index) => {
@@ -926,7 +940,7 @@
                 wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
 
                 // 태국어 단어와 발음을 함께 표시: "태국어 단어 (한국어 발음)"
-                const wordDisplay = isThaiSource && item.pronunciation
+                const wordDisplay = hasThaiWords && item.pronunciation
                     ? `${item.word || ''} <span class="text-blue-300 font-medium">(${item.pronunciation})</span>`
                     : item.word || '';
 
