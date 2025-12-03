@@ -46,6 +46,9 @@ body {
     background-color: #2c2c2c;
     color: #a1a1aa;
     transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lang-btn.active {
@@ -293,27 +296,45 @@ body {
     }
 
     header {
-        padding: 1rem !important;
+        padding: 0.75rem !important;
         margin-bottom: 1rem !important;
     }
 
+    header > div:first-child {
+        margin-bottom: 0.75rem !important;
+    }
+
     .lang-btn {
-        padding: 5px 8px !important;
-        font-size: 10px !important;
-        white-space: nowrap;
-        min-width: fit-content;
+        padding: 4px 6px !important;
+        font-size: 9px !important;
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2 !important;
+        min-width: auto;
+        max-width: none;
+        flex-shrink: 0;
     }
 
     #source-lang-group,
     #target-lang-group {
-        gap: 4px !important;
-        flex-wrap: nowrap;
+        gap: 3px !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden;
     }
 
     /* 언어 선택 컨테이너 모바일 최적화 */
     header [role="group"][aria-label="번역 언어 선택"] {
-        padding: 0.75rem 1rem !important;
-        gap: 0.5rem !important;
+        padding: 0.5rem 0.75rem !important;
+        gap: 0.25rem !important;
+        min-width: 0;
+    }
+
+    /* 화살표 아이콘 크기 조정 */
+    header [role="group"][aria-label="번역 언어 선택"] .fa-arrow-right,
+    header [role="group"][aria-label="번역 언어 선택"] i {
+        font-size: 8px !important;
+        margin: 0 2px !important;
     }
 
     body.is-mobile #input-text {
@@ -328,6 +349,28 @@ body {
     body.is-mobile .toss-button {
         width: 48px;
         height: 48px;
+    }
+}
+
+/* 매우 작은 화면 (360px 이하) */
+@media (max-width: 360px) {
+    .lang-btn {
+        padding: 3px 5px !important;
+        font-size: 8px !important;
+    }
+
+    #source-lang-group,
+    #target-lang-group {
+        gap: 2px !important;
+    }
+
+    header [role="group"][aria-label="번역 언어 선택"] {
+        padding: 0.5rem !important;
+        gap: 0.25rem !important;
+    }
+
+    header {
+        padding: 0.5rem !important;
     }
 }
 
