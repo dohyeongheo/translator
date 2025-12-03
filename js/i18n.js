@@ -20,7 +20,8 @@ const I18N = {
         textTooLong: "텍스트가 너무 깁니다. 최대 {maxLength}자까지 입력 가능합니다.",
         copyFailed: "복사 실패",
         apiKeyInvalid401: "API 키가 유효하지 않습니다. (401)",
-        apiRequestFailed: "API 요청에 실패했습니다. ({status})"
+        apiRequestFailed: "API 요청에 실패했습니다. ({status})",
+        ttsError: "음성 재생에 실패했습니다."
     },
     th: {
         auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
@@ -39,7 +40,8 @@ const I18N = {
         textTooLong: "ข้อความยาวเกินไป สามารถป้อนได้สูงสุด {maxLength} ตัวอักษร",
         copyFailed: "คัดลอกล้มเหลว",
         apiKeyInvalid401: "API Key ไม่ถูกต้อง (401)",
-        apiRequestFailed: "คำขอ API ล้มเหลว ({status})"
+        apiRequestFailed: "คำขอ API ล้มเหลว ({status})",
+        ttsError: "การเล่นเสียงล้มเหลว"
     },
     en: {
         auto: "Auto", ko: "Korean", th: "Thai", en: "English",
@@ -58,7 +60,8 @@ const I18N = {
         textTooLong: "Text is too long. Maximum {maxLength} characters allowed.",
         copyFailed: "Copy failed",
         apiKeyInvalid401: "API key is invalid. (401)",
-        apiRequestFailed: "API request failed ({status})"
+        apiRequestFailed: "API request failed ({status})",
+        ttsError: "TTS playback failed"
     }
 };
 

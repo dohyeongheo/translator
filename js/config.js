@@ -12,7 +12,10 @@ const CONFIG = {
     RETRY_DELAY: 1000,
     RESIZE_DEBOUNCE_DELAY: 150,
     MAX_TEXT_LENGTH: 10000,
-    API_KEY_STORAGE_KEY: 'gemini_api_key'
+    API_KEY_STORAGE_KEY: 'gemini_api_key',
+    MIN_API_KEY_LENGTH: 20,
+    TTS_RATE: 0.9,
+    API_TIMEOUT: 30000
 };
 
 /**

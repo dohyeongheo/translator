@@ -240,16 +240,33 @@ async function translateShortText(text, outputText, spinner, errorLog) {
  * @param {HTMLElement} spinner - 로딩 스피너
  */
 function displayTranslationResult(result, outputText, spinner) {
-    if (spinner) spinner.classList.add('hidden');
-    if (outputText && result.translatedText) {
-        safeSetText(outputText, result.translatedText);
-    }
-    const detectedLabel = document.getElementById('detected-lang-label');
-    if (detectedLabel && result.detectedSource) {
-        safeSetText(detectedLabel, result.detectedSource.toUpperCase());
-    }
-    if (result.translatedText) {
-        state.lastResult = result.translatedText;
+    try {
+        if (!result) {
+            console.error('displayTranslationResult: result is null or undefined');
+            return;
+        }
+
+        if (spinner) spinner.classList.add('hidden');
+        
+        if (outputText && result.translatedText) {
+            safeSetText(outputText, result.translatedText);
+        } else if (outputText && !result.translatedText) {
+            console.warn('displayTranslationResult: translatedText is missing');
+        }
+        
+        const detectedLabel = document.getElementById('detected-lang-label');
+        if (detectedLabel && result.detectedSource) {
+            safeSetText(detectedLabel, result.detectedSource.toUpperCase());
+        } else if (detectedLabel && !result.detectedSource) {
+            console.warn('displayTranslationResult: detectedSource is missing');
+        }
+        
+        if (result.translatedText) {
+            state.lastResult = result.translatedText;
+        }
+    } catch (error) {
+        console.error('displayTranslationResult error:', error);
+        if (spinner) spinner.classList.add('hidden');
     }
 }
 

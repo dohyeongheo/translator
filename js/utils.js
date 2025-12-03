@@ -52,25 +52,38 @@ function decryptApiKey(encryptedKey) {
  * 디바이스 감지
  */
 function detectDevice() {
-    const width = window.innerWidth;
-    const isDesktop = width >= CONFIG.DESKTOP_BREAKPOINT;
-
-    state.isMobile = !isDesktop;
-    state.isDesktop = isDesktop;
-
-    // body에 클래스 추가/제거
-    document.body.classList.toggle('is-mobile', state.isMobile);
-    document.body.classList.toggle('is-desktop', state.isDesktop);
-
-    // 컨테이너 너비 조정 (CSS 미디어 쿼리가 처리하므로 클래스만 제거)
-    const container = document.querySelector('.container-wrapper');
-    if (container) {
-        container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
-        if (state.isMobile) {
-            container.classList.add('max-w-full');
-        } else {
-            container.style.maxWidth = '';
+    try {
+        const width = window.innerWidth;
+        if (isNaN(width) || width <= 0) {
+            console.warn('detectDevice: Invalid window width:', width);
+            return;
         }
+
+        const isDesktop = width >= CONFIG.DESKTOP_BREAKPOINT;
+
+        state.isMobile = !isDesktop;
+        state.isDesktop = isDesktop;
+
+        // body에 클래스 추가/제거
+        if (document.body) {
+            document.body.classList.toggle('is-mobile', state.isMobile);
+            document.body.classList.toggle('is-desktop', state.isDesktop);
+        } else {
+            console.warn('detectDevice: document.body not found');
+        }
+
+        // 컨테이너 너비 조정 (CSS 미디어 쿼리가 처리하므로 클래스만 제거)
+        const container = document.querySelector('.container-wrapper');
+        if (container) {
+            container.classList.remove('max-w-md', 'max-w-lg', 'max-w-xl', 'max-w-full');
+            if (state.isMobile) {
+                container.classList.add('max-w-full');
+            } else {
+                container.style.maxWidth = '';
+            }
+        }
+    } catch (error) {
+        console.error('detectDevice error:', error);
     }
 }
 
@@ -80,8 +93,15 @@ function detectDevice() {
  * @param {string} text - 삽입할 텍스트
  */
 function safeSetText(element, text) {
-    if (!element) return;
-    element.textContent = text;
+    if (!element) {
+        console.warn('safeSetText: element is null or undefined');
+        return;
+    }
+    try {
+        element.textContent = text;
+    } catch (error) {
+        console.error('safeSetText error:', error, 'element:', element, 'text:', text);
+    }
 }
 
 /**

@@ -56,8 +56,7 @@ function saveApiKey() {
     }
 
     // API 키 기본 형식 검증 (최소 길이)
-    const MIN_API_KEY_LENGTH = 20;
-    if (newKey.length < MIN_API_KEY_LENGTH) {
+    if (newKey.length < CONFIG.MIN_API_KEY_LENGTH) {
         showToast(I18N[state.uiLang]?.apiKeyTooShort || "API key is too short. Must be at least 20 characters.");
         return;
     }
@@ -77,23 +76,46 @@ function saveApiKey() {
  * @param {string} dataPath - 데이터 경로
  */
 function setupRadioButtons(groupId, stateKey, dataPath) {
-    const container = document.getElementById(groupId);
-    if (!container) {
-        console.warn(`Container with id "${groupId}" not found`);
-        return;
-    }
-    container.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            container.querySelectorAll('button').forEach(b => {
-                b.classList.remove('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-                b.setAttribute('aria-pressed', 'false');
-            });
-            btn.classList.add('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-            btn.setAttribute('aria-pressed', 'true');
-            const val = dataPath.includes('tone') ? btn.dataset.tone : btn.dataset.lang;
-            state[stateKey] = val;
+    try {
+        const container = document.getElementById(groupId);
+        if (!container) {
+            console.warn(`setupRadioButtons: Container with id "${groupId}" not found`);
+            return;
+        }
+
+        const buttons = container.querySelectorAll('button');
+        if (buttons.length === 0) {
+            console.warn(`setupRadioButtons: No buttons found in container "${groupId}"`);
+            return;
+        }
+
+        buttons.forEach(btn => {
+            try {
+                btn.addEventListener('click', () => {
+                    try {
+                        container.querySelectorAll('button').forEach(b => {
+                            b.classList.remove('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+                            b.setAttribute('aria-pressed', 'false');
+                        });
+                        btn.classList.add('active', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+                        btn.setAttribute('aria-pressed', 'true');
+                        const val = dataPath.includes('tone') ? btn.dataset.tone : btn.dataset.lang;
+                        if (val && state.hasOwnProperty(stateKey)) {
+                            state[stateKey] = val;
+                        } else {
+                            console.warn(`setupRadioButtons: Invalid value "${val}" or state key "${stateKey}"`);
+                        }
+                    } catch (error) {
+                        console.error(`setupRadioButtons: Error handling button click:`, error);
+                    }
+                });
+            } catch (error) {
+                console.error(`setupRadioButtons: Error adding event listener to button:`, error);
+            }
         });
-    });
+    } catch (error) {
+        console.error(`setupRadioButtons error for groupId "${groupId}":`, error);
+    }
 }
 
 /**
@@ -162,17 +184,30 @@ function showToast(message) {
  * 결과 복사
  */
 function copyResult() {
-    if (!state.lastResult) {
-        showToast(I18N[state.uiLang]?.copied || "Nothing to copy");
-        return;
-    }
+    try {
+        if (!state.lastResult) {
+            console.warn('copyResult: No result to copy');
+            showToast(I18N[state.uiLang]?.copied || "Nothing to copy");
+            return;
+        }
 
-    navigator.clipboard.writeText(state.lastResult).then(() => {
-        showToast(I18N[state.uiLang]?.copied || "Copied!");
-    }).catch(err => {
-        console.error('Copy failed:', err);
+        // Clipboard API 지원 확인
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            console.error('copyResult: Clipboard API not supported');
+            showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
+            return;
+        }
+
+        navigator.clipboard.writeText(state.lastResult).then(() => {
+            showToast(I18N[state.uiLang]?.copied || "Copied!");
+        }).catch(err => {
+            console.error('copyResult: Clipboard write failed:', err);
+            showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
+        });
+    } catch (error) {
+        console.error('copyResult error:', error);
         showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
-    });
+    }
 }
 
 /**
@@ -181,16 +216,35 @@ function copyResult() {
  * @param {string} lang - 언어 코드
  */
 function playTTS(text, lang) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    if (!text || !text.trim()) {
+        console.warn('TTS: Empty text provided');
+        return;
+    }
 
-    if (lang === 'th') u.lang = 'th-TH';
-    else if (lang === 'ko') u.lang = 'ko-KR';
-    else if (lang === 'en') u.lang = 'en-US';
-    else u.lang = 'th-TH';
+    try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
 
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+        // 언어 매핑
+        const langMap = {
+            'th': 'th-TH',
+            'ko': 'ko-KR',
+            'en': 'en-US'
+        };
+
+        u.lang = langMap[lang] || langMap['th'];
+        u.rate = CONFIG.TTS_RATE;
+
+        u.onerror = (event) => {
+            console.error('TTS error:', event);
+            showToast(I18N[state.uiLang]?.ttsError || "음성 재생 실패");
+        };
+
+        window.speechSynthesis.speak(u);
+    } catch (error) {
+        console.error('TTS failed:', error);
+        showToast(I18N[state.uiLang]?.ttsError || "음성 재생 실패");
+    }
 }
 
 /**
@@ -203,7 +257,10 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
     const wordGuideSection = document.getElementById('word-guide-section');
     const wordGuideContent = document.getElementById('word-guide-content');
 
-    if (!wordGuideSection || !wordGuideContent) return;
+    if (!wordGuideSection || !wordGuideContent) {
+        console.error('Word guide section or content element not found');
+        return;
+    }
 
     // Hide if no word guide
     if (!wordGuide || !Array.isArray(wordGuide) || wordGuide.length === 0) {
@@ -215,49 +272,93 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
     wordGuideSection.classList.remove('hidden');
     wordGuideContent.classList.add('hidden'); // Start collapsed
 
-    // Clear previous content
-    wordGuideContent.innerHTML = '';
+    // Clear previous content - innerHTML 대신 안전한 방법 사용
+    while (wordGuideContent.firstChild) {
+        wordGuideContent.removeChild(wordGuideContent.firstChild);
+    }
 
     // Determine if we should show pronunciation (for Thai words)
     const hasThaiWords = detectedSource === 'th' || targetLang === 'th';
 
-    // Create word guide items
+    // Create word guide items using safe DOM manipulation
     wordGuide.forEach((item, index) => {
-        const wordItem = document.createElement('div');
-        wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
+        try {
+            const wordItem = document.createElement('div');
+            wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
 
-        // 태국어 단어와 발음을 함께 표시: "태국어 단어 (한국어 발음)"
-        const wordDisplay = hasThaiWords && item.pronunciation
-            ? `${escapeHtml(item.word || '')} <span class="text-blue-300 font-medium">(${escapeHtml(item.pronunciation)})</span>`
-            : escapeHtml(item.word || '');
+            // Container div
+            const container = document.createElement('div');
+            container.className = 'flex items-start gap-3';
 
-        const meaning = escapeHtml(item.meaning || '');
-        const example = item.example ? escapeHtml(item.example) : '';
+            // Number span
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'text-blue-400 font-bold text-xs min-w-[24px]';
+            safeSetText(numberSpan, `${index + 1}.`);
 
-        wordItem.innerHTML = `
-            <div class="flex items-start gap-3">
-                <span class="text-blue-400 font-bold text-xs min-w-[24px]">${index + 1}.</span>
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="font-bold text-white text-sm">${wordDisplay}</span>
-                    </div>
-                    <div class="text-gray-300 text-xs mb-1">
-                        <span class="text-gray-500">${I18N[state.uiLang].meaning}:</span> ${meaning}
-                    </div>
-                    ${example ? `
-                        <div class="text-gray-400 text-xs italic mt-1">
-                            <span class="text-gray-500">${I18N[state.uiLang].example}:</span> ${example}
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        wordGuideContent.appendChild(wordItem);
+            // Content div
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex-1';
+
+            // Word display div
+            const wordDiv = document.createElement('div');
+            wordDiv.className = 'flex items-center gap-2 mb-1';
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'font-bold text-white text-sm';
+
+            if (hasThaiWords && item.pronunciation) {
+                // 태국어 단어 표시
+                safeSetText(wordSpan, item.word || '');
+                const pronunciationSpan = document.createElement('span');
+                pronunciationSpan.className = 'text-blue-300 font-medium';
+                safeSetText(pronunciationSpan, ` (${item.pronunciation})`);
+                wordSpan.appendChild(pronunciationSpan);
+            } else {
+                safeSetText(wordSpan, item.word || '');
+            }
+            wordDiv.appendChild(wordSpan);
+
+            // Meaning div
+            const meaningDiv = document.createElement('div');
+            meaningDiv.className = 'text-gray-300 text-xs mb-1';
+            const meaningLabel = document.createElement('span');
+            meaningLabel.className = 'text-gray-500';
+            const meaningLabelText = I18N[state.uiLang]?.meaning || '의미';
+            safeSetText(meaningLabel, `${meaningLabelText}: `);
+            const meaningText = document.createTextNode(item.meaning || '');
+            meaningDiv.appendChild(meaningLabel);
+            meaningDiv.appendChild(meaningText);
+
+            // Assemble content div
+            contentDiv.appendChild(wordDiv);
+            contentDiv.appendChild(meaningDiv);
+
+            // Example div (if exists)
+            if (item.example) {
+                const exampleDiv = document.createElement('div');
+                exampleDiv.className = 'text-gray-400 text-xs italic mt-1';
+                const exampleLabel = document.createElement('span');
+                exampleLabel.className = 'text-gray-500';
+                const exampleLabelText = I18N[state.uiLang]?.example || '예문';
+                safeSetText(exampleLabel, `${exampleLabelText}: `);
+                const exampleText = document.createTextNode(item.example);
+                exampleDiv.appendChild(exampleLabel);
+                exampleDiv.appendChild(exampleText);
+                contentDiv.appendChild(exampleDiv);
+            }
+
+            // Assemble container
+            container.appendChild(numberSpan);
+            container.appendChild(contentDiv);
+            wordItem.appendChild(container);
+            wordGuideContent.appendChild(wordItem);
+        } catch (error) {
+            console.error(`Error creating word guide item ${index}:`, error);
+        }
     });
 
     // Update i18n text
     const toggleText = document.getElementById('word-guide-toggle-text');
-    if (toggleText && I18N[state.uiLang].wordGuide) {
+    if (toggleText && I18N[state.uiLang]?.wordGuide) {
         safeSetText(toggleText, I18N[state.uiLang].wordGuide);
     }
 }
@@ -266,24 +367,31 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
  * 단어 가이드 토글
  */
 function toggleWordGuide() {
-    const wordGuideContent = document.getElementById('word-guide-content');
-    const wordGuideIcon = document.getElementById('word-guide-icon');
-    const toggleButton = document.querySelector('[onclick="toggleWordGuide()"]');
+    try {
+        const wordGuideContent = document.getElementById('word-guide-content');
+        const wordGuideIcon = document.getElementById('word-guide-icon');
+        const toggleButton = document.querySelector('[onclick="toggleWordGuide()"]');
 
-    if (!wordGuideContent || !wordGuideIcon) return;
+        if (!wordGuideContent || !wordGuideIcon) {
+            console.warn('toggleWordGuide: wordGuideContent or wordGuideIcon not found');
+            return;
+        }
 
-    const isHidden = wordGuideContent.classList.contains('hidden');
+        const isHidden = wordGuideContent.classList.contains('hidden');
 
-    if (isHidden) {
-        wordGuideContent.classList.remove('hidden');
-        wordGuideIcon.classList.remove('fa-chevron-down');
-        wordGuideIcon.classList.add('fa-chevron-up');
-        if (toggleButton) toggleButton.setAttribute('aria-expanded', 'true');
-    } else {
-        wordGuideContent.classList.add('hidden');
-        wordGuideIcon.classList.remove('fa-chevron-up');
-        wordGuideIcon.classList.add('fa-chevron-down');
-        if (toggleButton) toggleButton.setAttribute('aria-expanded', 'false');
+        if (isHidden) {
+            wordGuideContent.classList.remove('hidden');
+            wordGuideIcon.classList.remove('fa-chevron-down');
+            wordGuideIcon.classList.add('fa-chevron-up');
+            if (toggleButton) toggleButton.setAttribute('aria-expanded', 'true');
+        } else {
+            wordGuideContent.classList.add('hidden');
+            wordGuideIcon.classList.remove('fa-chevron-up');
+            wordGuideIcon.classList.add('fa-chevron-down');
+            if (toggleButton) toggleButton.setAttribute('aria-expanded', 'false');
+        }
+    } catch (error) {
+        console.error('toggleWordGuide error:', error);
     }
 }
 
@@ -302,53 +410,96 @@ function escapeHtml(text) {
  * 초기화 함수
  */
 function init() {
-    // 디바이스 감지
-    detectDevice();
+    try {
+        // 디바이스 감지
+        detectDevice();
 
-    // 화면 크기 변경 시 재감지 (디바운싱 적용)
-    const debouncedDetectDevice = debounce(detectDevice, CONFIG.RESIZE_DEBOUNCE_DELAY);
-    window.addEventListener('resize', debouncedDetectDevice);
-
-    // 저장된 API 키 로드 (복호화)
-    const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
-    if (savedKey) {
+        // 화면 크기 변경 시 재감지 (디바운싱 적용)
         try {
-            state.apiKey = decryptApiKey(savedKey);
-        } catch (e) {
-            state.apiKey = savedKey; // 복호화 실패 시 원본 사용
+            const debouncedDetectDevice = debounce(detectDevice, CONFIG.RESIZE_DEBOUNCE_DELAY);
+            window.addEventListener('resize', debouncedDetectDevice);
+        } catch (error) {
+            console.error('init: Error setting up resize listener:', error);
         }
-    }
 
-    // 라디오 버튼 설정
-    setupRadioButtons('source-lang-group', 'sourceLang', 'dataset.lang');
-    setupRadioButtons('target-lang-group', 'targetLang', 'dataset.lang');
-    setupRadioButtons('nuance-group', 'tone', 'dataset.tone');
-
-    setActiveBtn('nuance-group', 'polite', 'border-blue-500', 'text-white', 'bg-blue-900/20');
-
-    // UI 언어 설정
-    setUILang('ko');
-
-    // 키보드 단축키 설정 (Ctrl+Enter로 번역)
-    const inputText = document.getElementById('input-text');
-    if (inputText) {
-        inputText.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                executeTranslation();
+        // 저장된 API 키 로드 (복호화)
+        try {
+            const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
+            if (savedKey) {
+                try {
+                    state.apiKey = decryptApiKey(savedKey);
+                } catch (e) {
+                    console.warn('init: API key decryption failed, using original:', e);
+                    state.apiKey = savedKey; // 복호화 실패 시 원본 사용
+                }
             }
-        });
-    }
-
-    // 설정 모달 ESC 키로 닫기
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('settings-modal');
-            if (modal && !modal.classList.contains('hidden')) {
-                toggleSettings();
-            }
+        } catch (error) {
+            console.error('init: Error loading API key from localStorage:', error);
         }
-    });
+
+        // 라디오 버튼 설정
+        try {
+            setupRadioButtons('source-lang-group', 'sourceLang', 'dataset.lang');
+            setupRadioButtons('target-lang-group', 'targetLang', 'dataset.lang');
+            setupRadioButtons('nuance-group', 'tone', 'dataset.tone');
+        } catch (error) {
+            console.error('init: Error setting up radio buttons:', error);
+        }
+
+        try {
+            setActiveBtn('nuance-group', 'polite', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+        } catch (error) {
+            console.error('init: Error setting active button:', error);
+        }
+
+        // UI 언어 설정
+        try {
+            setUILang('ko');
+        } catch (error) {
+            console.error('init: Error setting UI language:', error);
+        }
+
+        // 키보드 단축키 설정 (Ctrl+Enter로 번역)
+        try {
+            const inputText = document.getElementById('input-text');
+            if (inputText) {
+                inputText.addEventListener('keydown', (e) => {
+                    try {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                            e.preventDefault();
+                            executeTranslation();
+                        }
+                    } catch (error) {
+                        console.error('init: Error in keyboard shortcut handler:', error);
+                    }
+                });
+            } else {
+                console.warn('init: input-text element not found');
+            }
+        } catch (error) {
+            console.error('init: Error setting up keyboard shortcuts:', error);
+        }
+
+        // 설정 모달 ESC 키로 닫기
+        try {
+            document.addEventListener('keydown', (e) => {
+                try {
+                    if (e.key === 'Escape') {
+                        const modal = document.getElementById('settings-modal');
+                        if (modal && !modal.classList.contains('hidden')) {
+                            toggleSettings();
+                        }
+                    }
+                } catch (error) {
+                    console.error('init: Error in ESC key handler:', error);
+                }
+            });
+        } catch (error) {
+            console.error('init: Error setting up ESC key handler:', error);
+        }
+    } catch (error) {
+        console.error('init: Critical initialization error:', error);
+    }
 }
 
 // DOM 로드 완료 시 초기화
