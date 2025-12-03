@@ -135,11 +135,18 @@ body {
 
 /* PC 스타일 - 미디어 쿼리로 직접 적용 */
 @media (min-width: 768px) {
+    /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 (번역 후 UI 너비로 고정) */
+    body {
+        overflow-y: scroll !important;
+    }
+    
     .container-wrapper {
         max-width: 1400px !important;
+        width: 100%;
         margin: 0 auto;
         padding: 0 2rem;
         padding-top: 1.5rem !important;
+        box-sizing: border-box;
     }
 
     .mobile-only {
@@ -263,10 +270,17 @@ body {
 
 /* 대형 화면 스타일 (1920px 이상) */
 @media (min-width: 1920px) {
+    /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 */
+    body {
+        overflow-y: scroll !important;
+    }
+    
     .container-wrapper {
         max-width: 1600px !important;
+        width: 100%;
         padding: 0 3rem !important;
         padding-top: 2rem !important;
+        box-sizing: border-box;
     }
 
     header {
