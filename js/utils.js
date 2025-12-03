@@ -21,23 +21,6 @@ function debounce(func, wait) {
 }
 
 /**
- * 쓰로틀 함수 - 일정 시간 간격으로만 실행
- * @param {Function} func - 실행할 함수
- * @param {number} limit - 제한 시간 (ms)
- * @returns {Function} 쓰로틀된 함수
- */
-function throttle(func, limit) {
-    let inThrottle;
-    return function(...args) {
-        if (!inThrottle) {
-            func.apply(this, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-/**
  * API 키 간단 암호화 (Base64 인코딩)
  * @param {string} key - API 키
  * @returns {string} 암호화된 키
@@ -105,6 +88,9 @@ function safeSetText(element, text) {
  * 안전한 HTML 삽입 (XSS 방지 - 신뢰할 수 있는 내용만)
  * @param {HTMLElement} element - 대상 요소
  * @param {string} html - 삽입할 HTML
+ * @note 현재 코드베이스에서 사용되지 않음. 향후 HTML 삽입이 필요할 경우 사용 예정.
+ *       기본적인 XSS 방지를 위해 DOMPurify 같은 라이브러리 사용을 권장합니다.
+ *       이 함수는 신뢰할 수 있는 소스의 HTML만 삽입해야 합니다.
  */
 function safeSetHTML(element, html) {
     if (!element) return;

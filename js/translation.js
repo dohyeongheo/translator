@@ -120,7 +120,7 @@ async function callTranslationAPI(prompt, apiKey, retries = CONFIG.MAX_RETRIES) 
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error("API Key Invalid (401)");
+                    throw new Error(I18N[state.uiLang]?.apiKeyInvalid401 || "API Key Invalid (401)");
                 }
                 if (response.status === 429) {
                     // Rate limit - 지연 후 재시도
@@ -129,31 +129,54 @@ async function callTranslationAPI(prompt, apiKey, retries = CONFIG.MAX_RETRIES) 
                         continue;
                     }
                 }
-                throw new Error(`API Request Failed: ${response.status}`);
+                const errorMsg = (I18N[state.uiLang]?.apiRequestFailed || "API request failed ({status})")
+                    .replace('{status}', response.status);
+                throw new Error(errorMsg);
             }
 
             const data = await response.json();
             if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
-                throw new Error("Invalid API response format");
+                throw new Error(I18N[state.uiLang]?.invalidResponseFormat || "Invalid API response format");
             }
 
-            const result = JSON.parse(data.candidates[0].content.parts[0].text);
+            // JSON 파싱을 별도로 처리하여 파싱 에러는 재시도하지 않도록 함
+            let result;
+            try {
+                const jsonText = data.candidates[0].content.parts[0].text;
+                result = JSON.parse(jsonText);
+            } catch (parseError) {
+                // JSON 파싱 에러는 재시도해도 해결되지 않으므로 즉시 throw
+                throw new Error(I18N[state.uiLang]?.jsonParseError || "JSON parsing failed: " + parseError.message);
+            }
+
             return result;
 
         } catch (error) {
+            // JSON 파싱 에러나 응답 형식 에러는 재시도하지 않음
+            if (error.message.includes("JSON parsing") || error.message.includes("Invalid API response format") || error.message.includes("invalidResponseFormat")) {
+                throw error;
+            }
+
+            // 401 에러는 재시도하지 않음 (API 키 문제)
+            if (error.message.includes("401") || error.message.includes("API Key Invalid")) {
+                throw error;
+            }
+
             // 네트워크 오류인 경우 재시도
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
                 if (i < retries - 1) {
                     await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * (i + 1)));
                     continue;
                 }
-                throw new Error(I18N[state.uiLang].networkError || "Network error occurred");
+                throw new Error(I18N[state.uiLang]?.networkError || "Network error occurred");
             }
+
             // 마지막 시도이거나 재시도 불가능한 오류인 경우
             if (i === retries - 1) {
                 throw error;
             }
-            // 재시도 가능한 오류인 경우
+
+            // 재시도 가능한 오류인 경우 (429 등)
             await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * (i + 1)));
         }
     }
@@ -170,14 +193,16 @@ async function translateShortText(text, outputText, spinner, errorLog) {
     try {
         // 텍스트 길이 검증
         if (text.length > CONFIG.MAX_TEXT_LENGTH) {
-            throw new Error(`Text too long. Maximum ${CONFIG.MAX_TEXT_LENGTH} characters allowed.`);
+            const errorMsg = (I18N[state.uiLang]?.textTooLong || "Text is too long. Maximum {maxLength} characters allowed.")
+                .replace('{maxLength}', CONFIG.MAX_TEXT_LENGTH);
+            throw new Error(errorMsg);
         }
 
         const prompt = buildTranslationPrompt(text, state.sourceLang, state.targetLang, state.tone);
         const result = await callTranslationAPI(prompt, state.apiKey || defaultApiKey);
 
         if (!result.translatedText || !result.detectedSource) {
-            throw new Error("Invalid translation result format");
+            throw new Error(I18N[state.uiLang]?.invalidResponseFormat || "Invalid translation result format");
         }
 
         // Ensure wordGuide exists (backward compatibility)
@@ -215,11 +240,17 @@ async function translateShortText(text, outputText, spinner, errorLog) {
  * @param {HTMLElement} spinner - 로딩 스피너
  */
 function displayTranslationResult(result, outputText, spinner) {
-    spinner.classList.add('hidden');
-    safeSetText(outputText, result.translatedText);
+    if (spinner) spinner.classList.add('hidden');
+    if (outputText && result.translatedText) {
+        safeSetText(outputText, result.translatedText);
+    }
     const detectedLabel = document.getElementById('detected-lang-label');
-    if (detectedLabel) safeSetText(detectedLabel, result.detectedSource.toUpperCase());
-    state.lastResult = result.translatedText;
+    if (detectedLabel && result.detectedSource) {
+        safeSetText(detectedLabel, result.detectedSource.toUpperCase());
+    }
+    if (result.translatedText) {
+        state.lastResult = result.translatedText;
+    }
 }
 
 /**
@@ -230,17 +261,19 @@ function displayTranslationResult(result, outputText, spinner) {
  * @param {HTMLElement} errorLog - 에러 로그 요소
  */
 function handleTranslationError(error, spinner, outputText, errorLog) {
-    spinner.classList.add('hidden');
-    safeSetText(outputText, I18N[state.uiLang].error);
-    safeSetText(errorLog, `Error: ${error.message}`);
-    errorLog.classList.remove('hidden');
+    if (spinner) spinner.classList.add('hidden');
+    if (outputText) safeSetText(outputText, I18N[state.uiLang]?.error || "An error occurred");
+    if (errorLog) {
+        safeSetText(errorLog, `Error: ${error.message}`);
+        errorLog.classList.remove('hidden');
+    }
 
     if (error.message.includes("401")) {
         setTimeout(() => toggleSettings(), 1500);
     } else if (error.message.includes("Network") || error.message.includes("fetch")) {
-        showToast(I18N[state.uiLang].networkError || "Network error occurred");
+        showToast(I18N[state.uiLang]?.networkError || "Network error occurred");
     } else {
-        showToast(I18N[state.uiLang].translationFailed || "Translation failed");
+        showToast(I18N[state.uiLang]?.translationFailed || "Translation failed");
     }
 }
 
@@ -248,7 +281,13 @@ function handleTranslationError(error, spinner, outputText, errorLog) {
  * 번역 실행 (메인 함수)
  */
 async function executeTranslation() {
-    const text = document.getElementById('input-text').value.trim();
+    const inputTextEl = document.getElementById('input-text');
+    if (!inputTextEl) {
+        console.error('Input text element not found');
+        return;
+    }
+
+    const text = inputTextEl.value.trim();
     if (!text) return;
 
     const resultCard = document.getElementById('result-card');
@@ -256,10 +295,17 @@ async function executeTranslation() {
     const spinner = document.getElementById('loading-spinner');
     const errorLog = document.getElementById('error-log');
 
+    // 필수 DOM 요소 검증
+    if (!resultCard || !outputText || !spinner || !errorLog) {
+        console.error('Required DOM elements not found');
+        showToast(I18N[state.uiLang]?.error || "An error occurred. Please refresh the page.");
+        return;
+    }
+
     resultCard.classList.remove('hidden');
     resultCard.classList.remove('animate-pulse');
     spinner.classList.remove('hidden');
-    errorLog.classList.add('hidden');
+    if (errorLog) errorLog.classList.add('hidden');
 
     try {
         await translateShortText(text, outputText, spinner, errorLog);

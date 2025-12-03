@@ -12,8 +12,15 @@ const I18N = {
         apiKeySaved: "API 키가 저장되었습니다.",
         apiKeyRequired: "API 키를 입력해주세요.",
         apiKeyInvalid: "API 키가 유효하지 않습니다.",
+        apiKeyTooShort: "API 키가 너무 짧습니다. 최소 20자 이상이어야 합니다.",
         networkError: "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
-        translationFailed: "번역에 실패했습니다. 다시 시도해주세요."
+        translationFailed: "번역에 실패했습니다. 다시 시도해주세요.",
+        jsonParseError: "응답 데이터를 처리하는 중 오류가 발생했습니다.",
+        invalidResponseFormat: "서버 응답 형식이 올바르지 않습니다.",
+        textTooLong: "텍스트가 너무 깁니다. 최대 {maxLength}자까지 입력 가능합니다.",
+        copyFailed: "복사 실패",
+        apiKeyInvalid401: "API 키가 유효하지 않습니다. (401)",
+        apiRequestFailed: "API 요청에 실패했습니다. ({status})"
     },
     th: {
         auto: "อัตโนมัติ", ko: "เกาหลี", th: "ไทย", en: "อังกฤษ",
@@ -24,8 +31,15 @@ const I18N = {
         apiKeySaved: "บันทึก API Key แล้ว",
         apiKeyRequired: "กรุณาใส่ API Key",
         apiKeyInvalid: "API Key ไม่ถูกต้อง",
+        apiKeyTooShort: "API Key สั้นเกินไป ต้องมีอย่างน้อย 20 ตัวอักษร",
         networkError: "เกิดข้อผิดพลาดเครือข่าย กรุณาลองใหม่อีกครั้ง",
-        translationFailed: "การแปลล้มเหลว กรุณาลองใหม่อีกครั้ง"
+        translationFailed: "การแปลล้มเหลว กรุณาลองใหม่อีกครั้ง",
+        jsonParseError: "เกิดข้อผิดพลาดขณะประมวลผลข้อมูลตอบกลับ",
+        invalidResponseFormat: "รูปแบบการตอบกลับของเซิร์ฟเวอร์ไม่ถูกต้อง",
+        textTooLong: "ข้อความยาวเกินไป สามารถป้อนได้สูงสุด {maxLength} ตัวอักษร",
+        copyFailed: "คัดลอกล้มเหลว",
+        apiKeyInvalid401: "API Key ไม่ถูกต้อง (401)",
+        apiRequestFailed: "คำขอ API ล้มเหลว ({status})"
     },
     en: {
         auto: "Auto", ko: "Korean", th: "Thai", en: "English",
@@ -36,8 +50,15 @@ const I18N = {
         apiKeySaved: "API key saved.",
         apiKeyRequired: "Please enter API key.",
         apiKeyInvalid: "API key is invalid.",
+        apiKeyTooShort: "API key is too short. Must be at least 20 characters.",
         networkError: "Network error occurred. Please try again.",
-        translationFailed: "Translation failed. Please try again."
+        translationFailed: "Translation failed. Please try again.",
+        jsonParseError: "An error occurred while processing the response data.",
+        invalidResponseFormat: "Invalid server response format.",
+        textTooLong: "Text is too long. Maximum {maxLength} characters allowed.",
+        copyFailed: "Copy failed",
+        apiKeyInvalid401: "API key is invalid. (401)",
+        apiRequestFailed: "API request failed ({status})"
     }
 };
 

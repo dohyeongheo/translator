@@ -9,6 +9,11 @@ function toggleSettings() {
     const modal = document.getElementById('settings-modal');
     const input = document.getElementById('api-key-input');
 
+    if (!modal || !input) {
+        console.error('Settings modal elements not found');
+        return;
+    }
+
     if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
@@ -21,10 +26,12 @@ function toggleSettings() {
                 input.value = savedKey; // 복호화 실패 시 원본 사용
             }
         } else {
-            input.value = state.apiKey;
+            input.value = state.apiKey || '';
         }
         // 포커스 설정
-        setTimeout(() => input.focus(), 100);
+        setTimeout(() => {
+            if (input) input.focus();
+        }, 100);
     } else {
         modal.classList.add('hidden');
         modal.setAttribute('aria-hidden', 'true');
@@ -36,17 +43,31 @@ function toggleSettings() {
  */
 function saveApiKey() {
     const input = document.getElementById('api-key-input');
-    const newKey = input.value.trim();
-    if (newKey) {
-        state.apiKey = newKey;
-        // 암호화하여 저장
-        const encryptedKey = encryptApiKey(newKey);
-        localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
-        showToast(I18N[state.uiLang].apiKeySaved);
-        toggleSettings();
-    } else {
-        showToast(I18N[state.uiLang].apiKeyRequired);
+    if (!input) {
+        console.error('API key input element not found');
+        return;
     }
+
+    const newKey = input.value.trim();
+
+    if (!newKey) {
+        showToast(I18N[state.uiLang]?.apiKeyRequired || "Please enter API key.");
+        return;
+    }
+
+    // API 키 기본 형식 검증 (최소 길이)
+    const MIN_API_KEY_LENGTH = 20;
+    if (newKey.length < MIN_API_KEY_LENGTH) {
+        showToast(I18N[state.uiLang]?.apiKeyTooShort || "API key is too short. Must be at least 20 characters.");
+        return;
+    }
+
+    state.apiKey = newKey;
+    // 암호화하여 저장
+    const encryptedKey = encryptApiKey(newKey);
+    localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
+    showToast(I18N[state.uiLang]?.apiKeySaved || "API key saved.");
+    toggleSettings();
 }
 
 /**
@@ -92,11 +113,20 @@ function setActiveBtn(groupId, val, ...classes) {
  * 입력창 초기화
  */
 function clearInput() {
-    document.getElementById('input-text').value = '';
-    document.getElementById('result-card').classList.add('hidden');
+    const inputText = document.getElementById('input-text');
+    const resultCard = document.getElementById('result-card');
     const wordGuideSection = document.getElementById('word-guide-section');
-    if (wordGuideSection) wordGuideSection.classList.add('hidden');
-    document.getElementById('input-text').focus();
+
+    if (inputText) {
+        inputText.value = '';
+        inputText.focus();
+    }
+    if (resultCard) {
+        resultCard.classList.add('hidden');
+    }
+    if (wordGuideSection) {
+        wordGuideSection.classList.add('hidden');
+    }
 }
 
 /**
@@ -132,11 +162,16 @@ function showToast(message) {
  * 결과 복사
  */
 function copyResult() {
+    if (!state.lastResult) {
+        showToast(I18N[state.uiLang]?.copied || "Nothing to copy");
+        return;
+    }
+
     navigator.clipboard.writeText(state.lastResult).then(() => {
-        showToast(I18N[state.uiLang].copied);
+        showToast(I18N[state.uiLang]?.copied || "Copied!");
     }).catch(err => {
         console.error('Copy failed:', err);
-        showToast('복사 실패');
+        showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
     });
 }
 
