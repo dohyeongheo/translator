@@ -162,11 +162,21 @@ body {
         border-radius: 10px;
     }
 
+    /* 입력 영역 - 결과 카드와 동일한 스타일 */
     #input-text {
         height: 250px !important;
         min-height: 250px !important;
         font-size: 18px !important;
-        padding: 1.5rem !important;
+        padding: 0 !important;
+    }
+
+    /* 입력 영역 컨테이너 - 결과 카드와 동일한 패딩 및 스타일 */
+    #input-area {
+        min-height: 250px !important;
+    }
+
+    #input-text:focus {
+        outline: none;
     }
 
     #output-text {
