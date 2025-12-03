@@ -163,7 +163,8 @@ body {
     }
 
     #input-text {
-        min-height: 200px !important;
+        height: 250px !important;
+        min-height: 250px !important;
         font-size: 18px !important;
         padding: 1.5rem !important;
     }
@@ -201,6 +202,23 @@ body {
 
     h1 {
         font-size: 1.75rem !important;
+    }
+
+    #result-card {
+        transition: opacity 0.3s ease;
+    }
+
+    #result-card.hidden {
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
+
+    #result-card:not(.hidden) {
+        visibility: visible !important;
     }
 
     #result-card .toss-dark {
