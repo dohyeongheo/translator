@@ -15,7 +15,10 @@ const CONFIG = {
     API_KEY_STORAGE_KEY: 'gemini_api_key',
     MIN_API_KEY_LENGTH: 20,
     TTS_RATE: 0.9,
-    API_TIMEOUT: 30000
+    API_TIMEOUT: 30000,
+    // Supabase 설정 (사용자가 설정 모달에서 입력)
+    SUPABASE_URL_STORAGE_KEY: 'supabase_url',
+    SUPABASE_ANON_KEY_STORAGE_KEY: 'supabase_anon_key'
 };
 
 /**

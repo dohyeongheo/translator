@@ -7,9 +7,11 @@
  */
 function toggleSettings() {
     const modal = document.getElementById('settings-modal');
-    const input = document.getElementById('api-key-input');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const supabaseUrlInput = document.getElementById('supabase-url-input');
+    const supabaseKeyInput = document.getElementById('supabase-key-input');
 
-    if (!modal || !input) {
+    if (!modal || !apiKeyInput) {
         console.error('Settings modal elements not found');
         return;
     }
@@ -17,20 +19,34 @@ function toggleSettings() {
     if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
-        // 복호화된 키 표시
+
+        // API 키 표시
         const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
         if (savedKey) {
             try {
-                input.value = decryptApiKey(savedKey);
+                apiKeyInput.value = decryptApiKey(savedKey);
             } catch (e) {
-                input.value = savedKey; // 복호화 실패 시 원본 사용
+                apiKeyInput.value = savedKey; // 복호화 실패 시 원본 사용
             }
         } else {
-            input.value = state.apiKey || '';
+            apiKeyInput.value = state.apiKey || '';
         }
+
+        // Supabase URL 표시
+        if (supabaseUrlInput) {
+            const savedUrl = localStorage.getItem(CONFIG.SUPABASE_URL_STORAGE_KEY);
+            supabaseUrlInput.value = savedUrl || '';
+        }
+
+        // Supabase Key 표시
+        if (supabaseKeyInput) {
+            const savedSupabaseKey = localStorage.getItem(CONFIG.SUPABASE_ANON_KEY_STORAGE_KEY);
+            supabaseKeyInput.value = savedSupabaseKey || '';
+        }
+
         // 포커스 설정
         setTimeout(() => {
-            if (input) input.focus();
+            if (apiKeyInput) apiKeyInput.focus();
         }, 100);
     } else {
         modal.classList.add('hidden');
@@ -66,6 +82,50 @@ function saveApiKey() {
     const encryptedKey = encryptApiKey(newKey);
     localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
     showToast(I18N[state.uiLang]?.apiKeySaved || "API key saved.");
+    toggleSettings();
+}
+
+/**
+ * 설정 저장 (API 키 + Supabase)
+ */
+function saveSettings() {
+    // API 키 저장
+    const apiKeyInput = document.getElementById('api-key-input');
+    if (apiKeyInput) {
+        const newKey = apiKeyInput.value.trim();
+        if (newKey) {
+            if (newKey.length < CONFIG.MIN_API_KEY_LENGTH) {
+                showToast(I18N[state.uiLang]?.apiKeyTooShort || "API key is too short. Must be at least 20 characters.");
+                return;
+            }
+            state.apiKey = newKey;
+            const encryptedKey = encryptApiKey(newKey);
+            localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
+        }
+    }
+
+    // Supabase URL 저장
+    const supabaseUrlInput = document.getElementById('supabase-url-input');
+    if (supabaseUrlInput) {
+        const url = supabaseUrlInput.value.trim();
+        if (url) {
+            localStorage.setItem(CONFIG.SUPABASE_URL_STORAGE_KEY, url);
+        }
+    }
+
+    // Supabase Key 저장
+    const supabaseKeyInput = document.getElementById('supabase-key-input');
+    if (supabaseKeyInput) {
+        const key = supabaseKeyInput.value.trim();
+        if (key) {
+            localStorage.setItem(CONFIG.SUPABASE_ANON_KEY_STORAGE_KEY, key);
+        }
+    }
+
+    // Supabase 클라이언트 재초기화
+    initSupabase();
+
+    showToast(I18N[state.uiLang]?.apiKeySaved || "Settings saved.");
     toggleSettings();
 }
 
@@ -259,6 +319,234 @@ function extractOriginalTextFromExample(example) {
     return match ? match[1].trim() : example.trim();
 }
 
+// 툴팁 관련 전역 변수
+let currentTooltip = null;
+let tooltipTimeout = null;
+
+/**
+ * 텍스트에서 단어 매칭
+ * @param {string} text - 검색할 텍스트
+ * @param {Array} wordGuide - 단어 가이드 배열
+ * @returns {Array} 매칭된 단어 정보 배열 [{word, data, startIndex, endIndex}]
+ */
+function matchWordsInText(text, wordGuide) {
+    if (!text || !wordGuide || wordGuide.length === 0) return [];
+
+    const matches = [];
+    const textLower = text.toLowerCase();
+
+    wordGuide.forEach((item) => {
+        if (!item.word) return;
+
+        const searchWord = item.word.trim();
+        if (!searchWord) return;
+
+        // 부분 매칭: 텍스트에서 단어 찾기
+        let searchIndex = 0;
+        while (true) {
+            const index = textLower.indexOf(searchWord.toLowerCase(), searchIndex);
+            if (index === -1) break;
+
+            matches.push({
+                word: searchWord,
+                data: item,
+                startIndex: index,
+                endIndex: index + searchWord.length
+            });
+
+            searchIndex = index + 1;
+        }
+    });
+
+    // 시작 인덱스 순으로 정렬 (겹치는 경우 처리)
+    matches.sort((a, b) => a.startIndex - b.startIndex);
+
+    return matches;
+}
+
+/**
+ * 번역 결과 텍스트에 툴팁 기능 부여
+ */
+function attachTooltipToTranslationResult() {
+    const outputText = document.getElementById('output-text');
+    if (!outputText || !state.currentWordGuide || state.currentWordGuide.length === 0) {
+        return;
+    }
+
+    const text = outputText.textContent || outputText.innerText;
+    if (!text) return;
+
+    // 기존 이벤트 리스너 제거 (중복 방지)
+    const existingSpans = outputText.querySelectorAll('span[data-word-info]');
+    existingSpans.forEach(span => {
+        span.removeEventListener('mouseenter', handleWordHover);
+        span.removeEventListener('mouseleave', handleWordLeave);
+        span.removeEventListener('mousemove', handleWordMove);
+    });
+
+    // 텍스트를 단어 단위로 분할하고 매칭
+    const matches = matchWordsInText(text, state.currentWordGuide);
+
+    if (matches.length === 0) return;
+
+    // 텍스트를 span으로 감싸기
+    let newHTML = '';
+    let lastIndex = 0;
+
+    matches.forEach((match) => {
+        // 매칭 전 텍스트 추가
+        if (match.startIndex > lastIndex) {
+            newHTML += escapeHtml(text.substring(lastIndex, match.startIndex));
+        }
+
+        // 매칭된 단어를 span으로 감싸기
+        const wordText = text.substring(match.startIndex, match.endIndex);
+        newHTML += `<span class="tooltip-word cursor-help underline decoration-blue-400/50"
+            data-word-info='${escapeHtml(JSON.stringify(match.data))}'>${escapeHtml(wordText)}</span>`;
+
+        lastIndex = match.endIndex;
+    });
+
+    // 나머지 텍스트 추가
+    if (lastIndex < text.length) {
+        newHTML += escapeHtml(text.substring(lastIndex));
+    }
+
+    // HTML 설정 (안전하게)
+    outputText.innerHTML = newHTML;
+
+    // 이벤트 리스너 추가
+    const wordSpans = outputText.querySelectorAll('span[data-word-info]');
+    wordSpans.forEach(span => {
+        span.addEventListener('mouseenter', handleWordHover);
+        span.addEventListener('mouseleave', handleWordLeave);
+        span.addEventListener('mousemove', handleWordMove);
+    });
+}
+
+/**
+ * 단어 호버 이벤트 핸들러
+ */
+function handleWordHover(event) {
+    const wordDataStr = event.target.getAttribute('data-word-info');
+    if (!wordDataStr) return;
+
+    try {
+        const wordData = JSON.parse(wordDataStr);
+        showTooltip(event, wordData);
+    } catch (error) {
+        console.error('Failed to parse word data:', error);
+    }
+}
+
+/**
+ * 단어에서 벗어날 때 이벤트 핸들러
+ */
+function handleWordLeave() {
+    hideTooltip();
+}
+
+/**
+ * 단어 위에서 마우스 이동 이벤트 핸들러
+ */
+function handleWordMove(event) {
+    if (currentTooltip) {
+        updateTooltipPosition(event);
+    }
+}
+
+/**
+ * 툴팁 표시
+ * @param {Event} event - 마우스 이벤트
+ * @param {Object} wordData - 단어 데이터
+ */
+function showTooltip(event, wordData) {
+    // 기존 툴팁 제거
+    hideTooltip();
+
+    // 툴팁 요소 생성
+    const tooltip = document.createElement('div');
+    tooltip.className = 'word-tooltip fixed z-50 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 p-3 max-w-xs pointer-events-none';
+    tooltip.style.opacity = '0';
+    tooltip.style.transition = 'opacity 0.2s';
+
+    // 툴팁 내용 구성
+    let tooltipHTML = `<div class="font-bold text-sm mb-2">${escapeHtml(wordData.word || '')}</div>`;
+    tooltipHTML += `<div class="text-xs text-gray-300 mb-1"><span class="text-gray-500">${I18N[state.uiLang]?.meaning || '의미'}:</span> ${escapeHtml(wordData.meaning || '')}</div>`;
+
+    if (wordData.pronunciation) {
+        tooltipHTML += `<div class="text-xs text-blue-300"><span class="text-gray-500">${I18N[state.uiLang]?.pronunciation || '발음'}:</span> ${escapeHtml(wordData.pronunciation)}</div>`;
+    }
+
+    tooltip.innerHTML = tooltipHTML;
+    document.body.appendChild(tooltip);
+    currentTooltip = tooltip;
+
+    // 위치 설정
+    updateTooltipPosition(event);
+
+    // 페이드 인
+    setTimeout(() => {
+        if (tooltip) {
+            tooltip.style.opacity = '1';
+        }
+    }, 10);
+}
+
+/**
+ * 툴팁 위치 업데이트
+ * @param {Event} event - 마우스 이벤트
+ */
+function updateTooltipPosition(event) {
+    if (!currentTooltip) return;
+
+    const tooltip = currentTooltip;
+    const x = event.clientX;
+    const y = event.clientY;
+    const offset = 10;
+
+    // 기본 위치: 커서 오른쪽 아래
+    let left = x + offset;
+    let top = y + offset;
+
+    // 화면 경계 체크
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // 오른쪽으로 넘치면 왼쪽에 표시
+    if (left + tooltipRect.width > windowWidth) {
+        left = x - tooltipRect.width - offset;
+    }
+
+    // 아래로 넘치면 위에 표시
+    if (top + tooltipRect.height > windowHeight) {
+        top = y - tooltipRect.height - offset;
+    }
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+}
+
+/**
+ * 툴팁 제거
+ */
+function hideTooltip() {
+    if (currentTooltip) {
+        currentTooltip.style.opacity = '0';
+        setTimeout(() => {
+            if (currentTooltip && currentTooltip.parentNode) {
+                currentTooltip.parentNode.removeChild(currentTooltip);
+            }
+            currentTooltip = null;
+        }, 200);
+    }
+    if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+    }
+}
+
 /**
  * 단어/예문의 언어 결정
  * @param {Object} item - 단어 가이드 항목
@@ -354,7 +642,8 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
             const wordDiv = document.createElement('div');
             wordDiv.className = 'flex items-center gap-2 mb-1';
             const wordSpan = document.createElement('span');
-            wordSpan.className = 'font-bold text-white text-sm';
+            wordSpan.className = 'font-bold text-white text-sm tooltip-word cursor-help';
+            wordSpan.setAttribute('data-word-info', JSON.stringify(item));
 
             if (hasThaiWords && item.pronunciation) {
                 // 태국어 단어 표시
@@ -366,10 +655,28 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
             } else {
                 safeSetText(wordSpan, item.word || '');
             }
+
+            // 호버 이벤트 추가
+            wordSpan.addEventListener('mouseenter', (e) => {
+                showTooltip(e, item);
+            });
+            wordSpan.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+            wordSpan.addEventListener('mousemove', (e) => {
+                if (currentTooltip) {
+                    updateTooltipPosition(e);
+                }
+            });
+
             wordDiv.appendChild(wordSpan);
 
-            // TTS 버튼 추가 (단어/표현)
+            // TTS 버튼 및 저장 버튼 추가 (단어/표현)
             if (item.word && item.word.trim()) {
+                const buttonGroup = document.createElement('div');
+                buttonGroup.className = 'flex items-center gap-2';
+
+                // TTS 버튼
                 const wordTTSButton = document.createElement('button');
                 wordTTSButton.className = 'text-blue-400 hover:text-blue-300 transition';
                 wordTTSButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
@@ -385,7 +692,30 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
                     playTTS(item.word, wordLang);
                 });
 
-                wordDiv.appendChild(wordTTSButton);
+                // 저장 버튼
+                const saveButton = document.createElement('button');
+                saveButton.className = 'text-yellow-400 hover:text-yellow-300 transition';
+                saveButton.setAttribute('aria-label', I18N[state.uiLang]?.saveWord || '단어 저장');
+                saveButton.setAttribute('title', I18N[state.uiLang]?.saveWord || '단어 저장');
+                const saveIcon = document.createElement('i');
+                saveIcon.className = 'fas fa-bookmark text-xs';
+                saveIcon.setAttribute('aria-hidden', 'true');
+                saveButton.appendChild(saveIcon);
+
+                // 저장 버튼 클릭 이벤트
+                saveButton.addEventListener('click', async () => {
+                    const wordLang = determineWordLanguage(item, detectedSource, targetLang);
+                    await saveWordToVocabulary({
+                        word: item.word,
+                        meaning: item.meaning,
+                        pronunciation: item.pronunciation || null,
+                        language: wordLang
+                    }, saveButton, saveIcon);
+                });
+
+                buttonGroup.appendChild(wordTTSButton);
+                buttonGroup.appendChild(saveButton);
+                wordDiv.appendChild(buttonGroup);
             }
 
             // Meaning div

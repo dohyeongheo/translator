@@ -210,14 +210,20 @@ async function translateShortText(text, outputText, spinner, errorLog) {
             result.wordGuide = [];
         }
 
-        // Display results
-        displayTranslationResult(result, outputText, spinner);
-
-        // Display word guide
+        // Store wordGuide and translation data in state for tooltip
+        state.currentWordGuide = result.wordGuide || [];
+        state.currentTranslationText = result.translatedText || '';
+        state.currentDetectedSource = result.detectedSource || '';
         let wordGuideTargetLang = state.targetLang;
         if (wordGuideTargetLang === 'auto') {
             wordGuideTargetLang = (result.detectedSource === 'ko') ? 'th' : 'ko';
         }
+        state.currentTargetLang = wordGuideTargetLang;
+
+        // Display results
+        displayTranslationResult(result, outputText, spinner);
+
+        // Display word guide
         displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
 
         // Play TTS
@@ -247,20 +253,25 @@ function displayTranslationResult(result, outputText, spinner) {
         }
 
         if (spinner) spinner.classList.add('hidden');
-        
+
         if (outputText && result.translatedText) {
+            // 텍스트를 설정
             safeSetText(outputText, result.translatedText);
+            // 툴팁 기능 부여 (약간의 지연을 두어 DOM이 업데이트된 후 실행)
+            setTimeout(() => {
+                attachTooltipToTranslationResult();
+            }, 100);
         } else if (outputText && !result.translatedText) {
             console.warn('displayTranslationResult: translatedText is missing');
         }
-        
+
         const detectedLabel = document.getElementById('detected-lang-label');
         if (detectedLabel && result.detectedSource) {
             safeSetText(detectedLabel, result.detectedSource.toUpperCase());
         } else if (detectedLabel && !result.detectedSource) {
             console.warn('displayTranslationResult: detectedSource is missing');
         }
-        
+
         if (result.translatedText) {
             state.lastResult = result.translatedText;
         }
