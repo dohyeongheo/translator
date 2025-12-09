@@ -23,7 +23,7 @@
         <!-- 1. Header & Global UI Switcher -->
         <header class="toss-dark p-4 pb-2 shrink-0 rounded-b-2xl shadow-lg z-10 mb-4">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-black text-blue-400 flex items-center gap-2">
+                <h1 onclick="showTranslationPage()" class="text-xl font-black text-blue-400 flex items-center gap-2 cursor-pointer hover:text-blue-300 transition">
                     Nuance
                 </h1>
                 <div class="flex gap-2">
@@ -200,15 +200,15 @@
                             class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition active bg-blue-900/20 text-white border-blue-500">
                             🇹🇭 태국어
                         </button>
-                        <button data-vocab-lang="ko"
-                            onclick="loadAndDisplayVocabulary('ko')"
-                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition text-gray-400 hover:text-white">
-                            🇰🇷 한국어
-                        </button>
                         <button data-vocab-lang="en"
                             onclick="loadAndDisplayVocabulary('en')"
                             class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition text-gray-400 hover:text-white">
                             🇺🇸 영어
+                        </button>
+                        <button data-vocab-lang="ko"
+                            onclick="loadAndDisplayVocabulary('ko')"
+                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition text-gray-400 hover:text-white">
+                            🇰🇷 한국어
                         </button>
                     </div>
 
