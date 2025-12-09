@@ -248,6 +248,57 @@ function playTTS(text, lang) {
 }
 
 /**
+ * 예문에서 원문 텍스트 추출 (괄호 이전)
+ * @param {string} example - 예문 텍스트
+ * @returns {string} 괄호 이전의 원문 텍스트
+ */
+function extractOriginalTextFromExample(example) {
+    if (!example) return '';
+    // 괄호가 있으면 그 이전의 텍스트 추출
+    const match = example.match(/^([^(]+)/);
+    return match ? match[1].trim() : example.trim();
+}
+
+/**
+ * 단어/예문의 언어 결정
+ * @param {Object} item - 단어 가이드 항목
+ * @param {string} detectedSource - 감지된 소스 언어
+ * @param {string} targetLang - 타겟 언어
+ * @returns {string} 언어 코드 ('th', 'ko', 'en')
+ */
+function determineWordLanguage(item, detectedSource, targetLang) {
+    // wordGuide의 단어는 일반적으로:
+    // - source가 th이면 INPUT에서 추출한 태국어 단어
+    // - target이 th이면 TRANSLATED TEXT에서 추출한 태국어 단어
+    // - source가 en이면 INPUT에서 추출한 영어 단어
+    // - target이 en이면 TRANSLATED TEXT에서 추출한 영어 단어
+    // - source가 ko이면 INPUT에서 추출한 한국어 단어
+
+    // pronunciation 필드가 있으면 태국어
+    if (item.pronunciation) {
+        return 'th';
+    }
+
+    // detectedSource와 targetLang을 기반으로 추정
+    // 일반적으로 wordGuide는 번역된 텍스트(target)에서 추출되거나
+    // 원본 텍스트(source)에서 추출됨
+    if (targetLang === 'th' || detectedSource === 'th') {
+        // 태국어 관련이면 태국어일 가능성이 높음
+        // 하지만 pronunciation이 없으면 다른 언어일 수도 있음
+        return 'th';
+    }
+    if (targetLang === 'en' || detectedSource === 'en') {
+        return 'en';
+    }
+    if (targetLang === 'ko' || detectedSource === 'ko') {
+        return 'ko';
+    }
+
+    // 기본값: 태국어
+    return 'th';
+}
+
+/**
  * 단어 가이드 표시
  * @param {Array} wordGuide - 단어 가이드 배열
  * @param {string} detectedSource - 감지된 소스 언어
@@ -317,6 +368,26 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
             }
             wordDiv.appendChild(wordSpan);
 
+            // TTS 버튼 추가 (단어/표현)
+            if (item.word && item.word.trim()) {
+                const wordTTSButton = document.createElement('button');
+                wordTTSButton.className = 'text-blue-400 hover:text-blue-300 transition';
+                wordTTSButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+                wordTTSButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+                const wordTTSIcon = document.createElement('i');
+                wordTTSIcon.className = 'fas fa-volume-high text-xs';
+                wordTTSIcon.setAttribute('aria-hidden', 'true');
+                wordTTSButton.appendChild(wordTTSIcon);
+
+                // TTS 버튼 클릭 이벤트
+                wordTTSButton.addEventListener('click', () => {
+                    const wordLang = determineWordLanguage(item, detectedSource, targetLang);
+                    playTTS(item.word, wordLang);
+                });
+
+                wordDiv.appendChild(wordTTSButton);
+            }
+
             // Meaning div
             const meaningDiv = document.createElement('div');
             meaningDiv.className = 'text-gray-300 text-xs mb-1';
@@ -335,14 +406,39 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
             // Example div (if exists)
             if (item.example) {
                 const exampleDiv = document.createElement('div');
-                exampleDiv.className = 'text-gray-400 text-xs italic mt-1';
+                exampleDiv.className = 'flex items-start gap-2 text-gray-400 text-xs italic mt-1';
+                const exampleContentDiv = document.createElement('div');
+                exampleContentDiv.className = 'flex-1';
                 const exampleLabel = document.createElement('span');
                 exampleLabel.className = 'text-gray-500';
                 const exampleLabelText = I18N[state.uiLang]?.example || '예문';
                 safeSetText(exampleLabel, `${exampleLabelText}: `);
                 const exampleText = document.createTextNode(item.example);
-                exampleDiv.appendChild(exampleLabel);
-                exampleDiv.appendChild(exampleText);
+                exampleContentDiv.appendChild(exampleLabel);
+                exampleContentDiv.appendChild(exampleText);
+                exampleDiv.appendChild(exampleContentDiv);
+
+                // TTS 버튼 추가 (예문)
+                const originalExampleText = extractOriginalTextFromExample(item.example);
+                if (originalExampleText) {
+                    const exampleTTSButton = document.createElement('button');
+                    exampleTTSButton.className = 'text-blue-400 hover:text-blue-300 transition flex-shrink-0 mt-0.5';
+                    exampleTTSButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+                    exampleTTSButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+                    const exampleTTSIcon = document.createElement('i');
+                    exampleTTSIcon.className = 'fas fa-volume-high text-xs';
+                    exampleTTSIcon.setAttribute('aria-hidden', 'true');
+                    exampleTTSButton.appendChild(exampleTTSIcon);
+
+                    // TTS 버튼 클릭 이벤트
+                    exampleTTSButton.addEventListener('click', () => {
+                        const exampleLang = determineWordLanguage(item, detectedSource, targetLang);
+                        playTTS(originalExampleText, exampleLang);
+                    });
+
+                    exampleDiv.appendChild(exampleTTSButton);
+                }
+
                 contentDiv.appendChild(exampleDiv);
             }
 
