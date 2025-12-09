@@ -2,6 +2,71 @@
  * 단어장 기능
  */
 
+// 저장된 단어 캐시 (word + language 조합으로 저장)
+let savedWordsCache = new Map();
+
+/**
+ * 저장된 단어 목록 조회 및 캐시 업데이트
+ * @param {string} language - 언어 코드
+ * @returns {Promise<Set>} 저장된 단어 Set (word 값들)
+ */
+async function getSavedWords(language) {
+    try {
+        const client = getSupabaseClient();
+        if (!client) {
+            return new Set();
+        }
+
+        const cacheKey = language;
+
+        // 캐시에 있으면 반환
+        if (savedWordsCache.has(cacheKey)) {
+            return savedWordsCache.get(cacheKey);
+        }
+
+        const { data, error } = await client
+            .from('vocabulary')
+            .select('word')
+            .eq('language', language);
+
+        if (error) {
+            console.error('Failed to load saved words:', error);
+            return new Set();
+        }
+
+        // Set으로 변환하여 캐시에 저장
+        const wordSet = new Set((data || []).map(item => item.word));
+        savedWordsCache.set(cacheKey, wordSet);
+
+        return wordSet;
+    } catch (error) {
+        console.error('Error loading saved words:', error);
+        return new Set();
+    }
+}
+
+/**
+ * 단어 저장 상태 캐시 업데이트
+ * @param {string} language - 언어 코드
+ * @param {string} word - 단어
+ * @param {boolean} isSaved - 저장 여부
+ */
+function updateSavedWordsCache(language, word, isSaved) {
+    const cacheKey = language;
+    if (savedWordsCache.has(cacheKey)) {
+        const wordSet = savedWordsCache.get(cacheKey);
+        if (isSaved) {
+            wordSet.add(word);
+        } else {
+            wordSet.delete(word);
+        }
+    } else if (isSaved) {
+        // 캐시가 없고 저장하는 경우 새로 생성
+        const wordSet = new Set([word]);
+        savedWordsCache.set(cacheKey, wordSet);
+    }
+}
+
 /**
  * 단어를 단어장에 저장
  * @param {Object} wordData - 단어 데이터 {word, meaning, pronunciation, language}
@@ -64,6 +129,7 @@ async function saveWordToVocabulary(wordData, button = null, icon = null) {
         // 캐시에 추가
         if (data && data.id) {
             state.savedWords.push(data.id);
+            updateSavedWordsCache(wordData.language, wordData.word, true);
         }
     } catch (error) {
         console.error('Error saving word:', error);
@@ -113,6 +179,13 @@ async function deleteWord(wordId) {
             return false;
         }
 
+        // 삭제 전에 단어 정보 가져오기
+        const { data: wordData } = await client
+            .from('vocabulary')
+            .select('word, language')
+            .eq('id', wordId)
+            .single();
+
         const { error } = await client
             .from('vocabulary')
             .delete()
@@ -125,6 +198,11 @@ async function deleteWord(wordId) {
 
         // 캐시에서 제거
         state.savedWords = state.savedWords.filter(id => id !== wordId);
+
+        // 단어 정보를 가져와서 캐시 업데이트
+        if (wordData) {
+            updateSavedWordsCache(wordData.language, wordData.word, false);
+        }
 
         return true;
     } catch (error) {

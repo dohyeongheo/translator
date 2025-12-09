@@ -2,132 +2,6 @@
  * UI 제어 함수
  */
 
-/**
- * 설정 모달 토글
- */
-function toggleSettings() {
-    const modal = document.getElementById('settings-modal');
-    const apiKeyInput = document.getElementById('api-key-input');
-    const supabaseUrlInput = document.getElementById('supabase-url-input');
-    const supabaseKeyInput = document.getElementById('supabase-key-input');
-
-    if (!modal || !apiKeyInput) {
-        console.error('Settings modal elements not found');
-        return;
-    }
-
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.setAttribute('aria-hidden', 'false');
-
-        // API 키 표시
-        const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
-        if (savedKey) {
-            try {
-                apiKeyInput.value = decryptApiKey(savedKey);
-            } catch (e) {
-                apiKeyInput.value = savedKey; // 복호화 실패 시 원본 사용
-            }
-        } else {
-            apiKeyInput.value = state.apiKey || '';
-        }
-
-        // Supabase URL 표시
-        if (supabaseUrlInput) {
-            const savedUrl = localStorage.getItem(CONFIG.SUPABASE_URL_STORAGE_KEY);
-            supabaseUrlInput.value = savedUrl || '';
-        }
-
-        // Supabase Key 표시
-        if (supabaseKeyInput) {
-            const savedSupabaseKey = localStorage.getItem(CONFIG.SUPABASE_ANON_KEY_STORAGE_KEY);
-            supabaseKeyInput.value = savedSupabaseKey || '';
-        }
-
-        // 포커스 설정
-        setTimeout(() => {
-            if (apiKeyInput) apiKeyInput.focus();
-        }, 100);
-    } else {
-        modal.classList.add('hidden');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-}
-
-/**
- * API 키 저장
- */
-function saveApiKey() {
-    const input = document.getElementById('api-key-input');
-    if (!input) {
-        console.error('API key input element not found');
-        return;
-    }
-
-    const newKey = input.value.trim();
-
-    if (!newKey) {
-        showToast(I18N[state.uiLang]?.apiKeyRequired || "Please enter API key.");
-        return;
-    }
-
-    // API 키 기본 형식 검증 (최소 길이)
-    if (newKey.length < CONFIG.MIN_API_KEY_LENGTH) {
-        showToast(I18N[state.uiLang]?.apiKeyTooShort || "API key is too short. Must be at least 20 characters.");
-        return;
-    }
-
-    state.apiKey = newKey;
-    // 암호화하여 저장
-    const encryptedKey = encryptApiKey(newKey);
-    localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
-    showToast(I18N[state.uiLang]?.apiKeySaved || "API key saved.");
-    toggleSettings();
-}
-
-/**
- * 설정 저장 (API 키 + Supabase)
- */
-function saveSettings() {
-    // API 키 저장
-    const apiKeyInput = document.getElementById('api-key-input');
-    if (apiKeyInput) {
-        const newKey = apiKeyInput.value.trim();
-        if (newKey) {
-            if (newKey.length < CONFIG.MIN_API_KEY_LENGTH) {
-                showToast(I18N[state.uiLang]?.apiKeyTooShort || "API key is too short. Must be at least 20 characters.");
-                return;
-            }
-            state.apiKey = newKey;
-            const encryptedKey = encryptApiKey(newKey);
-            localStorage.setItem(CONFIG.API_KEY_STORAGE_KEY, encryptedKey);
-        }
-    }
-
-    // Supabase URL 저장
-    const supabaseUrlInput = document.getElementById('supabase-url-input');
-    if (supabaseUrlInput) {
-        const url = supabaseUrlInput.value.trim();
-        if (url) {
-            localStorage.setItem(CONFIG.SUPABASE_URL_STORAGE_KEY, url);
-        }
-    }
-
-    // Supabase Key 저장
-    const supabaseKeyInput = document.getElementById('supabase-key-input');
-    if (supabaseKeyInput) {
-        const key = supabaseKeyInput.value.trim();
-        if (key) {
-            localStorage.setItem(CONFIG.SUPABASE_ANON_KEY_STORAGE_KEY, key);
-        }
-    }
-
-    // Supabase 클라이언트 재초기화
-    initSupabase();
-
-    showToast(I18N[state.uiLang]?.apiKeySaved || "Settings saved.");
-    toggleSettings();
-}
 
 /**
  * 라디오 버튼 그룹 설정
@@ -373,15 +247,18 @@ function attachTooltipToTranslationResult() {
         return;
     }
 
+    // 기존 툴팁 제거
+    hideTooltip();
+
     const text = outputText.textContent || outputText.innerText;
     if (!text) return;
 
     // 기존 이벤트 리스너 제거 (중복 방지)
     const existingSpans = outputText.querySelectorAll('span[data-word-info]');
     existingSpans.forEach(span => {
-        span.removeEventListener('mouseenter', handleWordHover);
-        span.removeEventListener('mouseleave', handleWordLeave);
-        span.removeEventListener('mousemove', handleWordMove);
+        // 클론하여 이벤트 리스너 완전 제거
+        const newSpan = span.cloneNode(true);
+        span.parentNode.replaceChild(newSpan, span);
     });
 
     // 텍스트를 단어 단위로 분할하고 매칭
@@ -533,13 +410,11 @@ function updateTooltipPosition(event) {
  */
 function hideTooltip() {
     if (currentTooltip) {
-        currentTooltip.style.opacity = '0';
-        setTimeout(() => {
-            if (currentTooltip && currentTooltip.parentNode) {
-                currentTooltip.parentNode.removeChild(currentTooltip);
-            }
-            currentTooltip = null;
-        }, 200);
+        // 즉시 제거 (애니메이션 없이)
+        if (currentTooltip.parentNode) {
+            currentTooltip.parentNode.removeChild(currentTooltip);
+        }
+        currentTooltip = null;
     }
     if (tooltipTimeout) {
         clearTimeout(tooltipTimeout);
@@ -592,7 +467,7 @@ function determineWordLanguage(item, detectedSource, targetLang) {
  * @param {string} detectedSource - 감지된 소스 언어
  * @param {string} targetLang - 타겟 언어
  */
-function displayWordGuide(wordGuide, detectedSource, targetLang) {
+async function displayWordGuide(wordGuide, detectedSource, targetLang) {
     const wordGuideSection = document.getElementById('word-guide-section');
     const wordGuideContent = document.getElementById('word-guide-content');
 
@@ -618,6 +493,20 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
     // Determine if we should show pronunciation (for Thai words)
     const hasThaiWords = detectedSource === 'th' || targetLang === 'th';
+
+    // 저장된 단어 목록 조회 (비동기)
+    // 각 단어의 언어를 결정하여 저장된 단어 확인
+    const savedWordsPromises = wordGuide.map(async (item) => {
+        const wordLang = determineWordLanguage(item, detectedSource, targetLang);
+        const savedWords = await getSavedWords(wordLang);
+        return { word: item.word, language: wordLang, isSaved: savedWords.has(item.word) };
+    });
+
+    const savedWordsData = await Promise.all(savedWordsPromises);
+    const savedWordsMap = new Map();
+    savedWordsData.forEach(({ word, language, isSaved }) => {
+        savedWordsMap.set(`${word}_${language}`, isSaved);
+    });
 
     // Create word guide items using safe DOM manipulation
     wordGuide.forEach((item, index) => {
@@ -698,19 +587,45 @@ function displayWordGuide(wordGuide, detectedSource, targetLang) {
                 saveButton.setAttribute('aria-label', I18N[state.uiLang]?.saveWord || '단어 저장');
                 saveButton.setAttribute('title', I18N[state.uiLang]?.saveWord || '단어 저장');
                 const saveIcon = document.createElement('i');
-                saveIcon.className = 'fas fa-bookmark text-xs';
+
+                // 저장 상태 확인하여 아이콘 설정
+                const wordLangForItem = determineWordLanguage(item, detectedSource, targetLang);
+                const cacheKey = `${item.word}_${wordLangForItem}`;
+                const isWordSaved = savedWordsMap.get(cacheKey) || false;
+
+                if (isWordSaved) {
+                    // 저장된 단어: 채워진 아이콘
+                    saveIcon.className = 'fas fa-bookmark text-xs text-yellow-400';
+                } else {
+                    // 저장되지 않은 단어: 빈 아이콘
+                    saveIcon.className = 'far fa-bookmark text-xs text-gray-400';
+                }
+
                 saveIcon.setAttribute('aria-hidden', 'true');
                 saveButton.appendChild(saveIcon);
 
                 // 저장 버튼 클릭 이벤트
                 saveButton.addEventListener('click', async () => {
-                    const wordLang = determineWordLanguage(item, detectedSource, targetLang);
-                    await saveWordToVocabulary({
-                        word: item.word,
-                        meaning: item.meaning,
-                        pronunciation: item.pronunciation || null,
-                        language: wordLang
-                    }, saveButton, saveIcon);
+                    const wordLangForSave = determineWordLanguage(item, detectedSource, targetLang);
+                    const cacheKey = `${item.word}_${wordLangForSave}`;
+                    const wasSaved = savedWordsMap.get(cacheKey) || false;
+
+                    if (wasSaved) {
+                        // 이미 저장된 단어는 삭제 (선택사항 - 현재는 저장만 지원)
+                        // 필요시 삭제 기능 추가 가능
+                        showToast(I18N[state.uiLang]?.wordAlreadyExists || '이미 저장된 단어입니다.');
+                    } else {
+                        await saveWordToVocabulary({
+                            word: item.word,
+                            meaning: item.meaning,
+                            pronunciation: item.pronunciation || null,
+                            language: wordLangForSave
+                        }, saveButton, saveIcon);
+
+                        // 저장 후 아이콘 업데이트
+                        saveIcon.className = 'fas fa-bookmark text-xs text-yellow-400';
+                        savedWordsMap.set(cacheKey, true);
+                    }
                 });
 
                 buttonGroup.appendChild(wordTTSButton);
@@ -848,19 +763,23 @@ function init() {
             console.error('init: Error setting up resize listener:', error);
         }
 
-        // 저장된 API 키 로드 (복호화)
+        // API 키 로드 (secrets.js에서)
         try {
-            const savedKey = localStorage.getItem(CONFIG.API_KEY_STORAGE_KEY);
-            if (savedKey) {
-                try {
-                    state.apiKey = decryptApiKey(savedKey);
-                } catch (e) {
-                    console.warn('init: API key decryption failed, using original:', e);
-                    state.apiKey = savedKey; // 복호화 실패 시 원본 사용
-                }
+            if (typeof SECRETS !== 'undefined' && SECRETS.GEMINI_API_KEY) {
+                state.apiKey = SECRETS.GEMINI_API_KEY;
+            } else {
+                state.apiKey = defaultApiKey;
             }
         } catch (error) {
-            console.error('init: Error loading API key from localStorage:', error);
+            console.error('init: Error loading API key from secrets:', error);
+            state.apiKey = defaultApiKey;
+        }
+
+        // Supabase 클라이언트 초기화
+        try {
+            initSupabase();
+        } catch (error) {
+            console.error('init: Error initializing Supabase:', error);
         }
 
         // 라디오 버튼 설정
@@ -906,23 +825,6 @@ function init() {
             console.error('init: Error setting up keyboard shortcuts:', error);
         }
 
-        // 설정 모달 ESC 키로 닫기
-        try {
-            document.addEventListener('keydown', (e) => {
-                try {
-                    if (e.key === 'Escape') {
-                        const modal = document.getElementById('settings-modal');
-                        if (modal && !modal.classList.contains('hidden')) {
-                            toggleSettings();
-                        }
-                    }
-                } catch (error) {
-                    console.error('init: Error in ESC key handler:', error);
-                }
-            });
-        } catch (error) {
-            console.error('init: Error setting up ESC key handler:', error);
-        }
     } catch (error) {
         console.error('init: Critical initialization error:', error);
     }

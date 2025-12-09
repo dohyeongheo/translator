@@ -224,7 +224,7 @@ async function translateShortText(text, outputText, spinner, errorLog) {
         displayTranslationResult(result, outputText, spinner);
 
         // Display word guide
-        displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
+        await displayWordGuide(result.wordGuide, result.detectedSource, wordGuideTargetLang);
 
         // Play TTS
         let ttsLang = state.targetLang;

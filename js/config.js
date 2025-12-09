@@ -22,8 +22,8 @@ const CONFIG = {
 };
 
 /**
- * 기본 API 키 (공개 사용 시 빈 문자열)
+ * 기본 API 키 (secrets.js에서 로드)
  * @type {string}
  */
-const defaultApiKey = "";
+const defaultApiKey = (typeof SECRETS !== 'undefined' && SECRETS.GEMINI_API_KEY) ? SECRETS.GEMINI_API_KEY : "";
 

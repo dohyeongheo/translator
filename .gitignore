@@ -18,6 +18,9 @@ npm-debug.log*
 .env
 .env.local
 
+# API Keys and Secrets
+js/secrets.js
+
 # Temporary files
 *.tmp
 *.temp

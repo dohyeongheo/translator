@@ -10,12 +10,12 @@ let supabaseClient = null;
  */
 function initSupabase() {
     try {
-        // Supabase URL과 키를 로컬 스토리지에서 가져오기
-        const supabaseUrl = localStorage.getItem(CONFIG.SUPABASE_URL_STORAGE_KEY);
-        const supabaseKey = localStorage.getItem(CONFIG.SUPABASE_ANON_KEY_STORAGE_KEY);
+        // Supabase URL과 키를 secrets.js에서 가져오기
+        const supabaseUrl = (typeof SECRETS !== 'undefined' && SECRETS.SUPABASE_URL) ? SECRETS.SUPABASE_URL : '';
+        const supabaseKey = (typeof SECRETS !== 'undefined' && SECRETS.SUPABASE_ANON_KEY) ? SECRETS.SUPABASE_ANON_KEY : '';
 
         if (!supabaseUrl || !supabaseKey) {
-            console.warn('Supabase credentials not found. Please configure in settings.');
+            console.warn('Supabase credentials not found. Please configure in js/secrets.js.');
             return null;
         }
 
