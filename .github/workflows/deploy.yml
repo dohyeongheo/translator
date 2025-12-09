@@ -26,6 +26,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate secrets.js
+        run: |
+          cat > js/secrets.js << EOF
+          /**
+           * API 키 및 설정 정보
+           *
+           * 주의: 이 파일은 GitHub Actions에서 자동 생성됩니다.
+           * GitHub Secrets에서 값을 읽어와 생성됩니다.
+           */
+
+          const SECRETS = {
+              // Google Gemini API Key
+              GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
+
+              // Supabase 설정
+              SUPABASE_URL: '${{ secrets.SUPABASE_URL }}',
+              SUPABASE_ANON_KEY: '${{ secrets.SUPABASE_ANON_KEY }}'
+          };
+          EOF
+        shell: bash
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
