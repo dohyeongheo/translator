@@ -5,6 +5,17 @@
 // 저장된 단어 캐시 (word + language 조합으로 저장)
 let savedWordsCache = new Map();
 
+// 단어장 상태 관리
+let vocabularyState = {
+    searchTerm: '',
+    selectedWordIds: [],
+    currentPage: 1,
+    pageSize: 20,
+    isSelectAll: false,
+    allWords: [], // 전체 단어 목록 (검색/필터링 전)
+    filteredWords: [] // 필터링된 단어 목록
+};
+
 /**
  * 저장된 단어 목록 조회 및 캐시 업데이트
  * @param {string} language - 언어 코드
@@ -168,6 +179,112 @@ async function loadVocabulary(language) {
 }
 
 /**
+ * 선택된 단어들 일괄 삭제
+ */
+async function deleteSelectedWords() {
+    if (vocabularyState.selectedWordIds.length === 0) {
+        return;
+    }
+
+    const confirmMessage = I18N[state.uiLang]?.confirmDeleteSelected || '선택한 항목을 삭제하시겠습니까?';
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    const deleteBtn = document.getElementById('vocabulary-delete-selected-btn');
+    if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = '삭제 중...';
+    }
+
+    try {
+        // 선택된 ID들을 순차적으로 삭제
+        const deletePromises = vocabularyState.selectedWordIds.map(id => deleteWord(id));
+        await Promise.all(deletePromises);
+
+        // 선택 상태 초기화
+        vocabularyState.selectedWordIds = [];
+        vocabularyState.isSelectAll = false;
+
+        // 삭제 버튼 숨기기
+        if (deleteBtn) {
+            deleteBtn.classList.add('hidden');
+        }
+
+        showToast(I18N[state.uiLang]?.selectedItemsDeleted || '선택한 항목이 삭제되었습니다.');
+
+        // 목록 새로고침
+        await loadAndDisplayVocabulary(state.currentVocabularyLanguage);
+    } catch (error) {
+        console.error('Error deleting selected words:', error);
+        showToast(I18N[state.uiLang]?.wordDeleteFailed || '단어 삭제에 실패했습니다.');
+    } finally {
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = I18N[state.uiLang]?.deleteSelected || '선택 삭제';
+        }
+    }
+}
+
+/**
+ * 전체 선택/해제 토글
+ */
+function toggleSelectAll() {
+    vocabularyState.isSelectAll = !vocabularyState.isSelectAll;
+    vocabularyState.selectedWordIds = [];
+
+    if (vocabularyState.isSelectAll) {
+        // 현재 표시된 단어들 모두 선택
+        const checkboxes = document.querySelectorAll('#vocabulary-table-container input[type="checkbox"][data-word-id]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            const wordId = checkbox.getAttribute('data-word-id');
+            if (wordId && !vocabularyState.selectedWordIds.includes(wordId)) {
+                vocabularyState.selectedWordIds.push(wordId);
+            }
+        });
+    } else {
+        // 모두 해제
+        const checkboxes = document.querySelectorAll('#vocabulary-table-container input[type="checkbox"][data-word-id]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    updateDeleteButtonVisibility();
+}
+
+/**
+ * 개별 체크박스 토글
+ * @param {string} wordId - 단어 ID
+ */
+function toggleWordSelection(wordId) {
+    const index = vocabularyState.selectedWordIds.indexOf(wordId);
+    if (index > -1) {
+        vocabularyState.selectedWordIds.splice(index, 1);
+    } else {
+        vocabularyState.selectedWordIds.push(wordId);
+    }
+
+    vocabularyState.isSelectAll = false;
+    updateDeleteButtonVisibility();
+}
+
+/**
+ * 선택 삭제 버튼 표시/숨김 업데이트
+ */
+function updateDeleteButtonVisibility() {
+    const deleteBtn = document.getElementById('vocabulary-delete-selected-btn');
+    if (deleteBtn) {
+        if (vocabularyState.selectedWordIds.length > 0) {
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+    }
+}
+
+/**
  * 단어 삭제
  * @param {string} wordId - 단어 ID
  * @returns {Promise<boolean>} 삭제 성공 여부
@@ -215,6 +332,160 @@ async function deleteWord(wordId) {
 let vocabularySortState = { column: null, order: 'asc', words: null };
 
 /**
+ * 단어 검색 필터링
+ * @param {Array} words - 단어 목록
+ * @param {string} searchTerm - 검색어
+ * @returns {Array} 필터링된 단어 목록
+ */
+function filterVocabulary(words, searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') {
+        return words;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    return words.filter(word => {
+        const wordText = (word.word || '').toLowerCase();
+        const meaningText = (word.meaning || '').toLowerCase();
+        const pronunciationText = (word.pronunciation || '').toLowerCase();
+
+        return wordText.includes(term) ||
+               meaningText.includes(term) ||
+               pronunciationText.includes(term);
+    });
+}
+
+/**
+ * 단어 목록 페이지네이션
+ * @param {Array} words - 단어 목록
+ * @param {number} page - 현재 페이지 (1부터 시작)
+ * @param {number} pageSize - 페이지당 항목 수
+ * @returns {Object} { paginatedWords, totalPages, currentPage }
+ */
+function paginateWords(words, page, pageSize) {
+    const totalPages = Math.ceil(words.length / pageSize) || 1;
+    const currentPage = Math.max(1, Math.min(page, totalPages));
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedWords = words.slice(startIndex, endIndex);
+
+    return {
+        paginatedWords,
+        totalPages,
+        currentPage
+    };
+}
+
+/**
+ * 페이지네이션 UI 렌더링
+ * @param {number} totalPages - 전체 페이지 수
+ * @param {number} currentPage - 현재 페이지
+ */
+function renderPagination(totalPages, currentPage) {
+    const paginationContainer = document.getElementById('vocabulary-pagination');
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+
+    if (totalPages <= 1) {
+        return; // 페이지가 1개 이하면 페이지네이션 숨김
+    }
+
+    // 이전 버튼
+    const prevButton = document.createElement('button');
+    prevButton.className = `px-3 py-2 rounded-lg text-sm font-bold transition ${
+        currentPage === 1
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            : 'bg-gray-700 text-white hover:bg-gray-600'
+    }`;
+    prevButton.textContent = I18N[state.uiLang]?.previous || '이전';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            vocabularyState.currentPage = currentPage - 1;
+            applyFiltersAndRender();
+        }
+    });
+    paginationContainer.appendChild(prevButton);
+
+    // 페이지 번호 버튼
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    if (startPage > 1) {
+        const firstButton = document.createElement('button');
+        firstButton.className = 'px-3 py-2 rounded-lg text-sm font-bold transition bg-gray-700 text-white hover:bg-gray-600';
+        firstButton.textContent = '1';
+        firstButton.addEventListener('click', () => {
+            vocabularyState.currentPage = 1;
+            applyFiltersAndRender();
+        });
+        paginationContainer.appendChild(firstButton);
+
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'px-2 text-gray-400';
+            ellipsis.textContent = '...';
+            paginationContainer.appendChild(ellipsis);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.className = `px-3 py-2 rounded-lg text-sm font-bold transition ${
+            i === currentPage
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-white hover:bg-gray-600'
+        }`;
+        pageButton.textContent = i.toString();
+        pageButton.addEventListener('click', () => {
+            vocabularyState.currentPage = i;
+            applyFiltersAndRender();
+        });
+        paginationContainer.appendChild(pageButton);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'px-2 text-gray-400';
+            ellipsis.textContent = '...';
+            paginationContainer.appendChild(ellipsis);
+        }
+
+        const lastButton = document.createElement('button');
+        lastButton.className = 'px-3 py-2 rounded-lg text-sm font-bold transition bg-gray-700 text-white hover:bg-gray-600';
+        lastButton.textContent = totalPages.toString();
+        lastButton.addEventListener('click', () => {
+            vocabularyState.currentPage = totalPages;
+            applyFiltersAndRender();
+        });
+        paginationContainer.appendChild(lastButton);
+    }
+
+    // 다음 버튼
+    const nextButton = document.createElement('button');
+    nextButton.className = `px-3 py-2 rounded-lg text-sm font-bold transition ${
+        currentPage === totalPages
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            : 'bg-gray-700 text-white hover:bg-gray-600'
+    }`;
+    nextButton.textContent = I18N[state.uiLang]?.next || '다음';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            vocabularyState.currentPage = currentPage + 1;
+            applyFiltersAndRender();
+        }
+    });
+    paginationContainer.appendChild(nextButton);
+}
+
+/**
  * 단어장 테이블 렌더링
  * @param {Array} words - 단어 목록
  * @param {string} language - 언어 코드
@@ -250,27 +521,53 @@ function renderVocabularyTable(words, language) {
     // 테이블 헤더
     const thead = document.createElement('thead');
     thead.className = 'bg-gray-800/50';
-    thead.innerHTML = `
-        <tr>
-            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50" data-sort="word">
-                ${I18N[state.uiLang]?.original || '원문'}
-                <i class="fas fa-sort text-xs ml-1"></i>
-            </th>
-            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50" data-sort="pronunciation">
-                ${I18N[state.uiLang]?.pronunciation || '발음'}
-                <i class="fas fa-sort text-xs ml-1"></i>
-            </th>
-            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50" data-sort="meaning">
-                ${I18N[state.uiLang]?.meaning || '의미'}
-                <i class="fas fa-sort text-xs ml-1"></i>
-            </th>
-            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50" data-sort="created_at">
-                ${I18N[state.uiLang]?.savedDate || '저장 날짜'}
-                <i class="fas fa-sort text-xs ml-1"></i>
-            </th>
-            <th class="px-4 py-3 text-center">${I18N[state.uiLang]?.delete || '삭제'}</th>
-        </tr>
-    `;
+    const headerRow = document.createElement('tr');
+
+    // 체크박스 헤더
+    const checkboxHeader = document.createElement('th');
+    checkboxHeader.className = 'px-4 py-3 text-center w-12';
+    const selectAllCheckbox = document.createElement('input');
+    selectAllCheckbox.type = 'checkbox';
+    selectAllCheckbox.checked = vocabularyState.isSelectAll;
+    selectAllCheckbox.addEventListener('change', toggleSelectAll);
+    checkboxHeader.appendChild(selectAllCheckbox);
+    headerRow.appendChild(checkboxHeader);
+
+    // 원문 헤더
+    const wordHeader = document.createElement('th');
+    wordHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    wordHeader.setAttribute('data-sort', 'word');
+    wordHeader.innerHTML = `${I18N[state.uiLang]?.original || '원문'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    headerRow.appendChild(wordHeader);
+
+    // 발음 헤더
+    const pronunciationHeader = document.createElement('th');
+    pronunciationHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    pronunciationHeader.setAttribute('data-sort', 'pronunciation');
+    pronunciationHeader.innerHTML = `${I18N[state.uiLang]?.pronunciation || '발음'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    headerRow.appendChild(pronunciationHeader);
+
+    // 의미 헤더
+    const meaningHeader = document.createElement('th');
+    meaningHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    meaningHeader.setAttribute('data-sort', 'meaning');
+    meaningHeader.innerHTML = `${I18N[state.uiLang]?.meaning || '의미'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    headerRow.appendChild(meaningHeader);
+
+    // 저장 날짜 헤더
+    const dateHeader = document.createElement('th');
+    dateHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    dateHeader.setAttribute('data-sort', 'created_at');
+    dateHeader.innerHTML = `${I18N[state.uiLang]?.savedDate || '저장 날짜'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    headerRow.appendChild(dateHeader);
+
+    // 액션 헤더
+    const actionHeader = document.createElement('th');
+    actionHeader.className = 'px-4 py-3 text-center';
+    actionHeader.textContent = I18N[state.uiLang]?.delete || '삭제';
+    headerRow.appendChild(actionHeader);
+
+    thead.appendChild(headerRow);
 
     // 테이블 바디
     const tbody = document.createElement('tbody');
@@ -285,19 +582,74 @@ function renderVocabularyTable(words, language) {
             day: '2-digit'
         });
 
-        row.innerHTML = `
-            <td class="px-4 py-3 font-medium">${escapeHtml(word.word || '')}</td>
-            <td class="px-4 py-3 text-blue-300">${escapeHtml(word.pronunciation || '-')}</td>
-            <td class="px-4 py-3">${escapeHtml(word.meaning || '')}</td>
-            <td class="px-4 py-3 text-gray-400 text-xs">${dateStr}</td>
-            <td class="px-4 py-3 text-center">
-                <button onclick="handleDeleteWord('${word.id}')"
-                    class="text-red-400 hover:text-red-300 transition"
-                    aria-label="${I18N[state.uiLang]?.delete || '삭제'}">
-                    <i class="fas fa-trash text-xs"></i>
-                </button>
-            </td>
-        `;
+        // 체크박스 셀
+        const checkboxCell = document.createElement('td');
+        checkboxCell.className = 'px-4 py-3 text-center';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.setAttribute('data-word-id', word.id);
+        checkbox.checked = vocabularyState.selectedWordIds.includes(word.id);
+        checkbox.addEventListener('change', () => toggleWordSelection(word.id));
+        checkboxCell.appendChild(checkbox);
+        row.appendChild(checkboxCell);
+
+        // 원문 셀 (TTS 버튼 포함)
+        const wordCell = document.createElement('td');
+        wordCell.className = 'px-4 py-3';
+        const wordContainer = document.createElement('div');
+        wordContainer.className = 'flex items-center gap-2';
+        const wordText = document.createElement('span');
+        wordText.className = 'font-medium';
+        wordText.textContent = word.word || '';
+        wordContainer.appendChild(wordText);
+
+        // TTS 버튼
+        const ttsButton = document.createElement('button');
+        ttsButton.className = 'text-blue-400 hover:text-blue-300 transition';
+        ttsButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+        ttsButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+        const ttsIcon = document.createElement('i');
+        ttsIcon.className = 'fas fa-volume-high text-xs';
+        ttsButton.appendChild(ttsIcon);
+        ttsButton.addEventListener('click', () => {
+            if (typeof playTTS === 'function') {
+                playTTS(word.word, language);
+            }
+        });
+        wordContainer.appendChild(ttsButton);
+        wordCell.appendChild(wordContainer);
+        row.appendChild(wordCell);
+
+        // 발음 셀
+        const pronunciationCell = document.createElement('td');
+        pronunciationCell.className = 'px-4 py-3 text-blue-300';
+        pronunciationCell.textContent = word.pronunciation || '-';
+        row.appendChild(pronunciationCell);
+
+        // 의미 셀
+        const meaningCell = document.createElement('td');
+        meaningCell.className = 'px-4 py-3';
+        meaningCell.textContent = word.meaning || '';
+        row.appendChild(meaningCell);
+
+        // 날짜 셀
+        const dateCell = document.createElement('td');
+        dateCell.className = 'px-4 py-3 text-gray-400 text-xs';
+        dateCell.textContent = dateStr;
+        row.appendChild(dateCell);
+
+        // 삭제 셀
+        const deleteCell = document.createElement('td');
+        deleteCell.className = 'px-4 py-3 text-center';
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'text-red-400 hover:text-red-300 transition';
+        deleteButton.setAttribute('aria-label', I18N[state.uiLang]?.delete || '삭제');
+        deleteButton.addEventListener('click', () => handleDeleteWord(word.id));
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'fas fa-trash text-xs';
+        deleteButton.appendChild(deleteIcon);
+        deleteCell.appendChild(deleteButton);
+        row.appendChild(deleteCell);
 
         tbody.appendChild(row);
     });
@@ -339,8 +691,8 @@ function renderVocabularyTable(words, language) {
                 vocabularySortState.order = 'asc';
             }
 
-            // 테이블 다시 렌더링
-            renderVocabularyTable(vocabularySortState.words, language);
+            // 필터링 및 렌더링 적용
+            applyFiltersAndRender();
         });
     });
 }
@@ -410,6 +762,9 @@ async function showVocabularyPage() {
     if (translationSection) translationSection.classList.add('hidden');
     if (vocabularySection) vocabularySection.classList.remove('hidden');
 
+    // 검색 이벤트 리스너 초기화
+    initVocabularySearch();
+
     // 기본 언어로 단어 로드 (태국어)
     state.currentVocabularyLanguage = 'th';
     await loadAndDisplayVocabulary('th');
@@ -429,22 +784,98 @@ function showTranslationPage() {
 }
 
 /**
+ * 검색 이벤트 리스너 초기화
+ */
+function initVocabularySearch() {
+    const searchInput = document.getElementById('vocabulary-search-input');
+    if (!searchInput) return;
+
+    // 기존 이벤트 리스너 제거를 위해 클론
+    const newInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newInput, searchInput);
+
+    // 검색 입력 이벤트 (디바운싱)
+    let searchTimeout = null;
+    newInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            vocabularyState.searchTerm = e.target.value;
+            vocabularyState.currentPage = 1; // 검색 시 첫 페이지로
+            applyFiltersAndRender();
+        }, 300);
+    });
+
+    // Enter 키 이벤트
+    newInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimeout);
+            vocabularyState.searchTerm = e.target.value;
+            vocabularyState.currentPage = 1;
+            applyFiltersAndRender();
+        }
+    });
+}
+
+/**
+ * 필터링 및 렌더링 적용
+ */
+function applyFiltersAndRender() {
+    const language = state.currentVocabularyLanguage;
+
+    // 검색 필터링
+    vocabularyState.filteredWords = filterVocabulary(vocabularyState.allWords, vocabularyState.searchTerm);
+
+    // 정렬 적용
+    let sortedWords = [...vocabularyState.filteredWords];
+    if (vocabularySortState.column) {
+        sortedWords = sortWords([...vocabularyState.filteredWords], vocabularySortState.column, vocabularySortState.order);
+    }
+
+    // 페이지네이션 적용
+    const { paginatedWords, totalPages, currentPage } = paginateWords(sortedWords, vocabularyState.currentPage, vocabularyState.pageSize);
+    vocabularyState.currentPage = currentPage;
+
+    // 테이블 렌더링
+    renderVocabularyTable(paginatedWords, language);
+
+    // 페이지네이션 렌더링
+    renderPagination(totalPages, currentPage);
+
+    // 선택 삭제 버튼 업데이트
+    updateDeleteButtonVisibility();
+}
+
+/**
  * 언어별 단어 로드 및 표시
  * @param {string} language - 언어 코드
  */
 async function loadAndDisplayVocabulary(language) {
     state.currentVocabularyLanguage = language;
 
+    // 상태 초기화
+    vocabularyState.searchTerm = '';
+    vocabularyState.selectedWordIds = [];
+    vocabularyState.currentPage = 1;
+    vocabularyState.isSelectAll = false;
+
     const loadingIndicator = document.getElementById('vocabulary-loading');
     const tableContainer = document.getElementById('vocabulary-table-container');
+    const searchInput = document.getElementById('vocabulary-search-input');
 
     if (loadingIndicator) loadingIndicator.classList.remove('hidden');
     if (tableContainer) tableContainer.innerHTML = '';
+    if (searchInput) searchInput.value = '';
 
     const words = await loadVocabulary(language);
 
+    // 전체 단어 목록 저장
+    vocabularyState.allWords = words;
+
     if (loadingIndicator) loadingIndicator.classList.add('hidden');
-    renderVocabularyTable(words, language);
+
+    // 필터링 및 렌더링 적용
+    applyFiltersAndRender();
 
     // 언어 탭 활성화
     const langTabs = document.querySelectorAll('[data-vocab-lang]');

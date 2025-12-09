@@ -206,6 +206,22 @@
                         </button>
                     </div>
 
+                    <!-- Search and Actions -->
+                    <div class="flex gap-2 mb-4">
+                        <div class="flex-1 relative">
+                            <input type="text" id="vocabulary-search-input"
+                                class="w-full p-3 rounded-xl toss-input text-sm border border-gray-700 focus:border-blue-500 bg-gray-800/50 text-white"
+                                placeholder="원문, 의미, 발음으로 검색..."
+                                data-i18n-placeholder="searchPlaceholder">
+                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button id="vocabulary-delete-selected-btn" onclick="deleteSelectedWords()"
+                            class="px-4 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-500 transition hidden"
+                            data-i18n="deleteSelected">
+                            선택 삭제
+                        </button>
+                    </div>
+
                     <!-- Loading Indicator -->
                     <div id="vocabulary-loading" class="hidden text-center py-8">
                         <i class="fas fa-circle-notch fa-spin text-2xl text-blue-500 mb-2"></i>
@@ -213,8 +229,13 @@
                     </div>
 
                     <!-- Vocabulary Table Container -->
-                    <div id="vocabulary-table-container" class="overflow-x-auto">
+                    <div id="vocabulary-table-container" class="overflow-x-auto mb-4">
                         <!-- Table will be rendered here -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="vocabulary-pagination" class="flex justify-center items-center gap-2 mt-4">
+                        <!-- Pagination will be rendered here -->
                     </div>
                 </div>
             </div>
