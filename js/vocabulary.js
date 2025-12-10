@@ -88,8 +88,11 @@ async function saveWordToVocabulary(wordData, button = null, icon = null) {
     try {
         const client = getSupabaseClient();
         if (!client) {
-            showToast(I18N[state.uiLang]?.supabaseNotConfigured || 'Supabase가 설정되지 않았습니다. 설정에서 Supabase URL과 키를 입력해주세요.');
-            return;
+            return {
+                success: false,
+                action: 'save',
+                error: I18N[state.uiLang]?.supabaseNotConfigured || 'Supabase가 설정되지 않았습니다. 설정에서 Supabase URL과 키를 입력해주세요.'
+            };
         }
 
         // 중복 체크
@@ -105,10 +108,29 @@ async function saveWordToVocabulary(wordData, button = null, icon = null) {
         }
 
         if (existing) {
-            showToast(I18N[state.uiLang]?.wordAlreadyExists || '이미 저장된 단어입니다.');
-            // 저장된 상태로 표시
-            if (icon) icon.className = 'fas fa-bookmark text-xs text-yellow-400';
-            return;
+            // 이미 저장된 단어는 삭제
+            const { error: deleteError } = await client
+                .from('vocabulary')
+                .delete()
+                .eq('id', existing.id);
+
+            if (deleteError) {
+                console.error('Failed to delete word:', deleteError);
+                return {
+                    success: false,
+                    action: 'delete',
+                    error: I18N[state.uiLang]?.wordDeleteFailed || '단어 삭제에 실패했습니다.'
+                };
+            }
+
+            // 캐시에서 제거
+            state.savedWords = state.savedWords.filter(id => id !== existing.id);
+            updateSavedWordsCache(wordData.language, wordData.word, false);
+
+            return {
+                success: true,
+                action: 'delete'
+            };
         }
 
         // 단어 저장
@@ -125,16 +147,11 @@ async function saveWordToVocabulary(wordData, button = null, icon = null) {
 
         if (error) {
             console.error('Failed to save word:', error);
-            showToast(I18N[state.uiLang]?.wordSaveFailed || '단어 저장에 실패했습니다.');
-            return;
-        }
-
-        // 성공 메시지
-        showToast(I18N[state.uiLang]?.wordSaved || '단어가 저장되었습니다.');
-
-        // 버튼 상태 업데이트
-        if (icon) {
-            icon.className = 'fas fa-bookmark text-xs text-yellow-400';
+            return {
+                success: false,
+                action: 'save',
+                error: I18N[state.uiLang]?.wordSaveFailed || '단어 저장에 실패했습니다.'
+            };
         }
 
         // 캐시에 추가
@@ -142,9 +159,18 @@ async function saveWordToVocabulary(wordData, button = null, icon = null) {
             state.savedWords.push(data.id);
             updateSavedWordsCache(wordData.language, wordData.word, true);
         }
+
+        return {
+            success: true,
+            action: 'save'
+        };
     } catch (error) {
         console.error('Error saving word:', error);
-        showToast(I18N[state.uiLang]?.wordSaveFailed || '단어 저장에 실패했습니다.');
+        return {
+            success: false,
+            action: 'save',
+            error: I18N[state.uiLang]?.wordSaveFailed || '단어 저장에 실패했습니다.'
+        };
     }
 }
 
@@ -181,14 +207,17 @@ async function loadVocabulary(language) {
 /**
  * 선택된 단어들 일괄 삭제
  */
-async function deleteSelectedWords() {
+async function deleteSelectedWords(skipConfirm = false) {
     if (vocabularyState.selectedWordIds.length === 0) {
+        hideDeleteConfirmModal();
         return;
     }
 
-    const confirmMessage = I18N[state.uiLang]?.confirmDeleteSelected || '선택한 항목을 삭제하시겠습니까?';
-    if (!confirm(confirmMessage)) {
-        return;
+    if (!skipConfirm) {
+        const confirmMessage = I18N[state.uiLang]?.confirmDeleteSelected || '선택한 항목을 삭제하시겠습니까?';
+        if (!confirm(confirmMessage)) {
+            return;
+        }
     }
 
     const deleteBtn = document.getElementById('vocabulary-delete-selected-btn');
@@ -223,6 +252,9 @@ async function deleteSelectedWords() {
             deleteBtn.disabled = false;
             deleteBtn.textContent = I18N[state.uiLang]?.deleteSelected || '선택 삭제';
         }
+
+        // 모달 닫기
+        hideDeleteConfirmModal();
     }
 }
 
@@ -282,6 +314,23 @@ function updateDeleteButtonVisibility() {
             deleteBtn.classList.add('hidden');
         }
     }
+}
+
+// 삭제 확인 모달 표시
+function showDeleteConfirmModal() {
+    if (vocabularyState.selectedWordIds.length === 0) return;
+    const modal = document.getElementById('delete-confirm-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+// 삭제 확인 모달 숨김
+function hideDeleteConfirmModal() {
+    const modal = document.getElementById('delete-confirm-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 
 /**
@@ -502,7 +551,8 @@ function renderVocabularyTable(words, language) {
 
     if (!words || words.length === 0) {
         const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'text-center text-gray-400 py-8';
+        emptyMessage.className = 'text-center py-8';
+        emptyMessage.style.color = 'var(--text-tertiary)';
         emptyMessage.textContent = I18N[state.uiLang]?.noWords || '저장된 단어가 없습니다.';
         tableContainer.appendChild(emptyMessage);
         return;
@@ -520,7 +570,7 @@ function renderVocabularyTable(words, language) {
 
     // 테이블 헤더
     const thead = document.createElement('thead');
-    thead.className = 'bg-gray-800/50';
+    thead.style.background = 'var(--bg-card)';
     const headerRow = document.createElement('tr');
 
     // 체크박스 헤더
@@ -535,37 +585,45 @@ function renderVocabularyTable(words, language) {
 
     // 원문 헤더
     const wordHeader = document.createElement('th');
-    wordHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    wordHeader.className = 'px-4 py-3 text-left cursor-pointer';
+    wordHeader.style.color = 'var(--text-primary)';
     wordHeader.setAttribute('data-sort', 'word');
     wordHeader.innerHTML = `${I18N[state.uiLang]?.original || '원문'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    wordHeader.onmouseover = function() { this.style.background = 'var(--bg-card-hover)'; };
+    wordHeader.onmouseout = function() { this.style.background = 'transparent'; };
     headerRow.appendChild(wordHeader);
 
     // 발음 헤더
     const pronunciationHeader = document.createElement('th');
-    pronunciationHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    pronunciationHeader.className = 'px-4 py-3 text-left cursor-pointer';
+    pronunciationHeader.style.color = 'var(--text-primary)';
     pronunciationHeader.setAttribute('data-sort', 'pronunciation');
     pronunciationHeader.innerHTML = `${I18N[state.uiLang]?.pronunciation || '발음'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    pronunciationHeader.onmouseover = function() { this.style.background = 'var(--bg-card-hover)'; };
+    pronunciationHeader.onmouseout = function() { this.style.background = 'transparent'; };
     headerRow.appendChild(pronunciationHeader);
 
     // 의미 헤더
     const meaningHeader = document.createElement('th');
-    meaningHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    meaningHeader.className = 'px-4 py-3 text-left cursor-pointer';
+    meaningHeader.style.color = 'var(--text-primary)';
     meaningHeader.setAttribute('data-sort', 'meaning');
     meaningHeader.innerHTML = `${I18N[state.uiLang]?.meaning || '의미'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    meaningHeader.onmouseover = function() { this.style.background = 'var(--bg-card-hover)'; };
+    meaningHeader.onmouseout = function() { this.style.background = 'transparent'; };
     headerRow.appendChild(meaningHeader);
 
     // 저장 날짜 헤더
     const dateHeader = document.createElement('th');
-    dateHeader.className = 'px-4 py-3 text-left cursor-pointer hover:bg-gray-700/50';
+    dateHeader.className = 'px-4 py-3 text-left cursor-pointer';
+    dateHeader.style.color = 'var(--text-primary)';
     dateHeader.setAttribute('data-sort', 'created_at');
     dateHeader.innerHTML = `${I18N[state.uiLang]?.savedDate || '저장 날짜'} <i class="fas fa-sort text-xs ml-1"></i>`;
+    dateHeader.onmouseover = function() { this.style.background = 'var(--bg-card-hover)'; };
+    dateHeader.onmouseout = function() { this.style.background = 'transparent'; };
     headerRow.appendChild(dateHeader);
 
-    // 액션 헤더
-    const actionHeader = document.createElement('th');
-    actionHeader.className = 'px-4 py-3 text-center';
-    actionHeader.textContent = I18N[state.uiLang]?.delete || '삭제';
-    headerRow.appendChild(actionHeader);
+    // 액션 헤더 제거 (삭제 컬럼 제거)
 
     thead.appendChild(headerRow);
 
@@ -573,7 +631,9 @@ function renderVocabularyTable(words, language) {
     const tbody = document.createElement('tbody');
     sortedWords.forEach(word => {
         const row = document.createElement('tr');
-        row.className = 'border-b border-gray-700 hover:bg-gray-800/30';
+        row.style.borderBottom = '1px solid var(--border-color)';
+        row.onmouseover = function() { this.style.background = 'var(--bg-card-hover)'; };
+        row.onmouseout = function() { this.style.background = 'transparent'; };
 
         const date = new Date(word.created_at);
         const dateStr = date.toLocaleDateString('ko-KR', {
@@ -605,9 +665,12 @@ function renderVocabularyTable(words, language) {
 
         // TTS 버튼
         const ttsButton = document.createElement('button');
-        ttsButton.className = 'text-blue-400 hover:text-blue-300 transition';
+        ttsButton.className = 'transition';
+        ttsButton.style.color = 'var(--accent-primary)';
         ttsButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
         ttsButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+        ttsButton.onmouseover = function() { this.style.color = 'var(--accent-hover)'; };
+        ttsButton.onmouseout = function() { this.style.color = 'var(--accent-primary)'; };
         const ttsIcon = document.createElement('i');
         ttsIcon.className = 'fas fa-volume-high text-xs';
         ttsButton.appendChild(ttsIcon);
@@ -622,7 +685,8 @@ function renderVocabularyTable(words, language) {
 
         // 발음 셀
         const pronunciationCell = document.createElement('td');
-        pronunciationCell.className = 'px-4 py-3 text-blue-300';
+        pronunciationCell.className = 'px-4 py-3';
+        pronunciationCell.style.color = 'var(--accent-primary)';
         pronunciationCell.textContent = word.pronunciation || '-';
         row.appendChild(pronunciationCell);
 
@@ -634,22 +698,12 @@ function renderVocabularyTable(words, language) {
 
         // 날짜 셀
         const dateCell = document.createElement('td');
-        dateCell.className = 'px-4 py-3 text-gray-400 text-xs';
+        dateCell.className = 'px-4 py-3 text-xs';
+        dateCell.style.color = 'var(--text-tertiary)';
         dateCell.textContent = dateStr;
         row.appendChild(dateCell);
 
-        // 삭제 셀
-        const deleteCell = document.createElement('td');
-        deleteCell.className = 'px-4 py-3 text-center';
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'text-red-400 hover:text-red-300 transition';
-        deleteButton.setAttribute('aria-label', I18N[state.uiLang]?.delete || '삭제');
-        deleteButton.addEventListener('click', () => handleDeleteWord(word.id));
-        const deleteIcon = document.createElement('i');
-        deleteIcon.className = 'fas fa-trash text-xs';
-        deleteButton.appendChild(deleteIcon);
-        deleteCell.appendChild(deleteButton);
-        row.appendChild(deleteCell);
+        // 삭제 셀 제거
 
         tbody.appendChild(row);
     });
@@ -757,9 +811,11 @@ async function showVocabularyPage() {
     // 번역 페이지 숨기기
     const mainContent = document.querySelector('main');
     const translationSection = document.getElementById('translation-section');
+    const realtimeSection = document.getElementById('realtime-section');
     const vocabularySection = document.getElementById('vocabulary-section');
 
     if (translationSection) translationSection.classList.add('hidden');
+    if (realtimeSection) realtimeSection.classList.add('hidden');
     if (vocabularySection) vocabularySection.classList.remove('hidden');
 
     // 검색 이벤트 리스너 초기화
@@ -777,9 +833,26 @@ function showTranslationPage() {
     state.currentPage = 'translation';
 
     const translationSection = document.getElementById('translation-section');
+    const realtimeSection = document.getElementById('realtime-section');
     const vocabularySection = document.getElementById('vocabulary-section');
 
     if (translationSection) translationSection.classList.remove('hidden');
+    if (realtimeSection) realtimeSection.classList.add('hidden');
+    if (vocabularySection) vocabularySection.classList.add('hidden');
+}
+
+/**
+ * 실시간 번역 페이지 표시
+ */
+function showRealtimePage() {
+    state.currentPage = 'realtime';
+
+    const translationSection = document.getElementById('translation-section');
+    const realtimeSection = document.getElementById('realtime-section');
+    const vocabularySection = document.getElementById('vocabulary-section');
+
+    if (translationSection) translationSection.classList.add('hidden');
+    if (realtimeSection) realtimeSection.classList.remove('hidden');
     if (vocabularySection) vocabularySection.classList.add('hidden');
 }
 

@@ -1,481 +1,843 @@
+/* CSS 변수 정의 - 그레이톤 컨셉 */
+:root {
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --bg-header: #232f3e;
+  --bg-header-secondary: #2d3a4a;
+  --bg-header-hover: #374151;
+  --accent-primary: #4a5568;
+  --accent-secondary: #718096;
+  --accent-hover: #2d3748;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-tertiary: #a0aec0;
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e0;
+  --border-header: #3d4857;
+  --text-header: #ffffff;
+  --text-header-secondary: #d1d5db;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-header: 0 1px 0 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: #121212;
-    color: white;
-    -webkit-tap-highlight-color: transparent;
+  font-family: "Noto Sans KR", sans-serif;
+  background: var(--bg-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
 }
 
 .thai-font {
-    font-family: 'Sarabun', sans-serif;
+  font-family: "Sarabun", sans-serif;
 }
 
+/* 심플 모던 카드 스타일 */
 .toss-dark {
-    background-color: #1e1e1e;
-    color: #f2f4f6;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-smooth);
+}
+
+.toss-dark:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 헤더는 toss-dark 스타일을 오버라이드 */
+header.toss-dark {
+  background: var(--bg-header) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-header) !important;
+  box-shadow: var(--shadow-header) !important;
+  border-radius: 0 !important;
+  color: var(--text-header) !important;
+}
+
+header.toss-dark:hover {
+  background: var(--bg-header) !important;
+  border-bottom: 1px solid var(--border-header) !important;
+  box-shadow: var(--shadow-header) !important;
+}
+
+/* 헤더 내부 모든 요소의 border-radius 제거 */
+header.toss-dark *,
+header.toss-dark button,
+header.toss-dark div,
+header.toss-dark .lang-btn,
+header.toss-dark .ui-lang-btn {
+  border-radius: 0 !important;
+}
+
+/* 헤더 내부 모든 요소의 border-radius 제거 */
+header.toss-dark *,
+header.toss-dark *::before,
+header.toss-dark *::after {
+  border-radius: 0 !important;
 }
 
 .toss-input {
-    background-color: #2c2c2c;
-    border: none;
-    color: white;
-    transition: all 0.2s;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: var(--transition-smooth);
+  min-height: 44px; /* 모바일 터치 친화적 */
 }
 
 .toss-input:focus {
-    background-color: #333;
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
+  background: var(--bg-card);
+  border-color: var(--accent-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1), var(--shadow-md);
 }
 
 .toss-button {
-    background-color: #3182f6;
-    transition: all 0.2s;
+  background: var(--accent-primary);
+  color: #ffffff;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-md);
+  min-width: 48px; /* 모바일 터치 친화적 */
+  min-height: 48px;
+  border: none;
+}
+
+.toss-button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .toss-button:active {
-    transform: scale(0.96);
-    opacity: 0.9;
+  transform: scale(0.95) translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
-/* 언어 선택 버튼 */
+/* 언어 선택 버튼 - 모바일 퍼스트 */
 .lang-btn {
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    background-color: #2c2c2c;
-    color: #a1a1aa;
-    transition: all 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  padding: 4px 10px;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border-header);
+  color: var(--text-header-secondary);
+  transition: var(--transition-smooth);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 28px;
+}
+
+.lang-btn:hover {
+  background: var(--bg-header-hover);
+  border-color: var(--text-header-secondary);
+  color: var(--text-header);
 }
 
 .lang-btn.active {
-    background-color: #3b82f6;
-    color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: var(--bg-header-hover);
+  border-color: var(--text-header);
+  color: var(--text-header);
+  font-weight: 600;
 }
 
 /* UI 언어 스위처 */
 .ui-lang-btn {
-    opacity: 0.5;
-    filter: grayscale(1);
-    transition: all 0.2s;
+  opacity: 0.6;
+  filter: grayscale(1);
+  transition: var(--transition-smooth);
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px;
+}
+
+.ui-lang-btn:hover {
+  opacity: 0.9;
+  background: var(--bg-header-hover);
+  border-color: var(--border-header);
 }
 
 .ui-lang-btn.active {
-    opacity: 1;
-    filter: grayscale(0);
-    transform: scale(1.1);
+  opacity: 1;
+  filter: grayscale(0);
+  transform: scale(1);
+  background: var(--bg-header-hover);
+  border-color: var(--border-header);
 }
 
 /* 펄스 애니메이션 */
 .pulse-text {
-    animation: pulse 1.5s infinite;
+  animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-    0% {
-        opacity: 1;
-    }
+  0% {
+    opacity: 1;
+  }
 
-    50% {
-        opacity: 0.5;
-    }
+  50% {
+    opacity: 0.5;
+  }
 
-    100% {
-        opacity: 1;
-    }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Toast Animation */
 @keyframes toast-fade-in {
-    from {
-        opacity: 0;
-    }
+  from {
+    opacity: 0;
+  }
 
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes toast-fade-out {
-    from {
-        opacity: 1;
-    }
+  from {
+    opacity: 1;
+  }
 
-    to {
-        opacity: 0;
-    }
+  to {
+    opacity: 0;
+  }
 }
 
 #toast.show {
-    animation: toast-fade-in 0.3s ease-out;
+  animation: toast-fade-in 0.3s ease-out;
 }
 
 #toast.hide {
-    animation: toast-fade-out 0.3s ease-out;
+  animation: toast-fade-out 0.3s ease-out;
 }
 
 /* 설정 모달 */
 .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
 }
 
-/* 모바일 스타일 (기본) */
+/* 번역 설정 버튼 스타일 (입력 상단 바용) */
+.translation-setting-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.translation-setting-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.translation-setting-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 모바일 퍼스트 기본 스타일 */
 .mobile-only {
-    display: block;
+  display: block;
 }
 
 .desktop-only {
-    display: none;
+  display: none;
 }
 
-/* PC 스타일 - 미디어 쿼리로 직접 적용 */
+/* 모바일 기본 스타일 - 일관된 간격 */
+.container-wrapper {
+  max-width: 100%;
+  padding: 16px;
+  padding-top: 0;
+  --header-margin: 16px;
+}
+
+header {
+  padding: 8px 16px;
+  margin-bottom: 0;
+  border-radius: 0;
+  background: var(--bg-header) !important;
+  border-bottom: 1px solid var(--border-header);
+  box-shadow: var(--shadow-header);
+  color: var(--text-header);
+}
+
+.header-full-width {
+  margin-left: calc(-1 * var(--header-margin, 16px));
+  margin-right: calc(-1 * var(--header-margin, 16px));
+  width: calc(100% + 2 * var(--header-margin, 16px));
+}
+
+main {
+  padding: 0 16px;
+  padding-bottom: 100px;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+/* 입력 영역 모바일 최적화 */
+#input-text {
+  min-height: 140px;
+  font-size: 16px;
+  padding: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+#input-area {
+  min-height: 140px;
+}
+
+#output-text {
+  font-size: 1.5rem;
+  line-height: 1.7;
+  padding: 16px;
+  color: var(--text-primary);
+}
+
+/* 버튼 모바일 최적화 */
+.toss-button {
+  width: 52px;
+  height: 52px;
+  font-size: 1.1rem;
+  border-radius: 16px;
+}
+
+/* 카드 패딩 모바일 - 일관된 간격 */
+.toss-dark {
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+/* 뉘앙스 버튼 모바일 */
+#nuance-group button {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 0;
+  min-height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-header);
+  color: var(--text-header-secondary);
+  transition: var(--transition-smooth);
+  font-weight: 500;
+}
+
+#nuance-group button:hover {
+  background: var(--bg-header-hover);
+  border-color: var(--text-header-secondary);
+  color: var(--text-header);
+}
+
+#nuance-group button.active {
+  background: var(--bg-header-hover);
+  border-color: var(--text-header);
+  color: var(--text-header);
+  font-weight: 600;
+}
+
+/* 태블릿 스타일 (768px 이상) */
 @media (min-width: 768px) {
-    /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 (번역 후 UI 너비로 고정) */
-    body {
-        overflow-y: scroll !important;
-    }
+  /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 (번역 후 UI 너비로 고정) */
+  body {
+    overflow-y: scroll !important;
+  }
 
-    .container-wrapper {
-        max-width: 1400px !important;
-        width: 100%;
-        margin: 0 auto;
-        padding: 0 2rem;
-        padding-top: 1.5rem !important;
-        box-sizing: border-box;
-    }
+  .container-wrapper {
+    max-width: 1400px !important;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 24px;
+    padding-top: 0 !important;
+    box-sizing: border-box;
+  }
 
-    .mobile-only {
-        display: none;
-    }
+  .mobile-only {
+    display: none;
+  }
 
-    .desktop-only {
-        display: block;
-    }
+  .desktop-only {
+    display: block;
+  }
 
-    header {
-        padding: 2rem 2.5rem !important;
-        border-radius: 0 0 1.5rem 1.5rem;
-        margin-bottom: 1rem !important;
-    }
+  .container-wrapper {
+    --header-margin: 24px;
+  }
 
-    .lang-btn {
-        padding: 10px 18px !important;
-        font-size: 14px !important;
-        border-radius: 10px;
-    }
+  header {
+    padding: 10px 24px !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    background: var(--bg-header) !important;
+    border-bottom: 1px solid var(--border-header) !important;
+    box-shadow: var(--shadow-header) !important;
+  }
 
-    /* 입력 영역 - 결과 카드와 동일한 스타일 */
-    #input-text {
-        height: 250px !important;
-        min-height: 250px !important;
-        font-size: 18px !important;
-        padding: 0 !important;
-    }
+  .header-full-width {
+    margin-left: calc(-1 * var(--header-margin)) !important;
+    margin-right: calc(-1 * var(--header-margin)) !important;
+    width: calc(100% + 2 * var(--header-margin)) !important;
+  }
 
-    /* 입력 영역 컨테이너 - 결과 카드와 동일한 패딩 및 스타일 */
-    #input-area {
-        min-height: 250px !important;
-    }
+  .lang-btn {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    border-radius: 0;
+    min-height: 28px;
+  }
 
-    #input-text:focus {
-        outline: none;
-    }
+  /* 입력 영역 - 결과 카드와 동일한 스타일 */
+  #input-text {
+    height: 250px !important;
+    min-height: 250px !important;
+    font-size: 18px !important;
+    padding: 0 !important;
+  }
 
-    #output-text {
-        font-size: 2rem !important;
-        line-height: 1.6;
-    }
+  /* 입력 영역 컨테이너 - 결과 카드와 동일한 패딩 및 스타일 */
+  #input-area {
+    min-height: 250px !important;
+  }
 
-    .toss-button {
-        width: 64px !important;
-        height: 64px !important;
-        font-size: 1.25rem !important;
-    }
+  #input-text:focus {
+    outline: none;
+  }
 
-    .toss-button:hover {
-        background-color: #2563eb;
-        transform: scale(1.05);
-    }
+  #output-text {
+    font-size: 2rem !important;
+    line-height: 1.6;
+  }
 
-    .lang-btn:hover {
-        background-color: #3b82f6;
-        color: white;
-    }
+  .toss-button {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 1.25rem !important;
+    border-radius: 20px;
+  }
 
-    main {
-        padding: 0 2rem !important;
-        padding-top: 0 !important;
-        max-width: 100%;
-    }
+  .toss-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
 
-    .toss-dark {
-        padding: 2rem !important;
-    }
+  .lang-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
 
-    h1 {
-        font-size: 1.75rem !important;
-    }
+  main {
+    padding: 0 24px !important;
+    padding-top: 0 !important;
+    max-width: 100%;
+  }
 
-    #result-card {
-        transition: opacity 0.3s ease;
-    }
+  .toss-dark {
+    padding: 24px !important;
+    border-radius: 16px !important;
+    margin-bottom: 20px !important;
+  }
 
-    #result-card.hidden {
-        visibility: hidden !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden;
-    }
+  h1 {
+    font-size: 1.75rem !important;
+    color: var(--text-primary) !important;
+  }
 
-    #result-card:not(.hidden) {
-        visibility: visible !important;
-    }
+  #result-card {
+    transition: opacity 0.3s ease;
+  }
 
-    #result-card .toss-dark {
-        padding: 2.5rem !important;
-    }
+  #result-card.hidden {
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
 
+  #result-card:not(.hidden) {
+    visibility: visible !important;
+  }
+
+  #result-card .toss-dark {
+    padding: 24px !important;
+  }
+
+  #nuance-group {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  /* 모바일에서만 2열 유지 */
+  @media (max-width: 767px) {
     #nuance-group {
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 1rem !important;
+      grid-template-columns: repeat(2, 1fr) !important;
     }
+  }
 
-    /* 모바일에서만 2열 유지 */
-    @media (max-width: 767px) {
-        #nuance-group {
-            grid-template-columns: repeat(2, 1fr) !important;
-        }
-    }
+  #nuance-group button {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    border-radius: 0 !important;
+    min-height: 28px;
+    transition: var(--transition-smooth);
+    background: transparent;
+    border: 1px solid var(--border-header);
+    color: var(--text-header-secondary);
+    font-weight: 500;
+  }
 
-    #nuance-group button {
-        padding: 1.25rem !important;
-        font-size: 14px !important;
-    }
+  #nuance-group button:hover {
+    background: var(--bg-header-hover);
+    border-color: var(--text-header-secondary);
+    color: var(--text-header);
+    transform: none;
+    box-shadow: none;
+  }
 
-    #word-guide-section {
-        font-size: 14px;
-    }
+  #nuance-group button.active {
+    background: var(--bg-header-hover);
+    border-color: var(--text-header);
+    color: var(--text-header);
+    font-weight: 600;
+    box-shadow: none;
+  }
 
-    #word-guide-content {
-        font-size: 13px;
-    }
+  #word-guide-section {
+    font-size: 14px;
+  }
+
+  #word-guide-content {
+    font-size: 13px;
+  }
 }
 
 /* 대형 화면 스타일 (1920px 이상) */
 @media (min-width: 1920px) {
-    /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 */
-    body {
-        overflow-y: scroll !important;
-    }
+  /* 스크롤바를 항상 예약하여 컨테이너 너비 일정하게 유지 */
+  body {
+    overflow-y: scroll !important;
+  }
 
-    .container-wrapper {
-        max-width: 1600px !important;
-        width: 100%;
-        padding: 0 3rem !important;
-        padding-top: 2rem !important;
-        box-sizing: border-box;
-    }
+  .container-wrapper {
+    max-width: 1600px !important;
+    width: 100%;
+    padding: 0 48px !important;
+    padding-top: 0 !important;
+    box-sizing: border-box;
+  }
 
-    header {
-        padding: 2.5rem 3rem !important;
-    }
+  .container-wrapper {
+    --header-margin: 48px;
+  }
 
-    main {
-        padding: 3rem !important;
-    }
+  header {
+    padding: 10px 32px !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    background: var(--bg-header) !important;
+    border-bottom: 1px solid var(--border-header) !important;
+    box-shadow: var(--shadow-header) !important;
+    color: var(--text-header) !important;
+  }
 
-    #input-text {
-        min-height: 250px !important;
-        font-size: 20px !important;
-        padding: 2rem !important;
-    }
+  .header-full-width {
+    margin-left: calc(-1 * var(--header-margin)) !important;
+    margin-right: calc(-1 * var(--header-margin)) !important;
+    width: calc(100% + 2 * var(--header-margin)) !important;
+  }
 
-    #output-text {
-        font-size: 2.25rem !important;
-    }
+  main {
+    padding: 0 48px !important;
+  }
 
-    .lang-btn {
-        padding: 12px 22px !important;
-        font-size: 15px !important;
-    }
+  #input-text {
+    min-height: 250px !important;
+    font-size: 20px !important;
+    padding: 24px !important;
+  }
 
-    .toss-button {
-        width: 72px !important;
-        height: 72px !important;
-        font-size: 1.5rem !important;
-    }
+  #output-text {
+    font-size: 2.25rem !important;
+  }
 
-    h1 {
-        font-size: 2rem !important;
-    }
+  .lang-btn {
+    padding: 12px 22px !important;
+    font-size: 15px !important;
+  }
 
-    .toss-dark {
-        padding: 2.5rem !important;
-    }
+  .toss-button {
+    width: 72px !important;
+    height: 72px !important;
+    font-size: 1.5rem !important;
+  }
 
-    #nuance-group {
-        gap: 1.5rem !important;
-    }
+  h1 {
+    font-size: 2rem !important;
+  }
 
-    #nuance-group button {
-        padding: 1.5rem !important;
-        font-size: 15px !important;
-    }
+  .toss-dark {
+    padding: 32px !important;
+    margin-bottom: 24px !important;
+  }
+
+  #nuance-group {
+    gap: 1.5rem !important;
+  }
+
+  #nuance-group button {
+    padding: 24px !important;
+    font-size: 15px !important;
+  }
 }
 
-/* 모바일 스타일 */
-@media (max-width: 767px) {
-    .container-wrapper {
-        max-width: 100%;
-        padding-top: 1rem !important;
-    }
+/* 작은 모바일 화면 (480px 이하) */
+@media (max-width: 480px) {
+  .container-wrapper {
+    padding: 12px;
+    padding-top: 0;
+  }
 
-    header {
-        padding: 0.75rem !important;
-        margin-bottom: 1rem !important;
-    }
+  header {
+    padding: 16px;
+    margin-bottom: 0;
+    border-radius: 0;
+    background: var(--bg-header) !important;
+    border-bottom: 1px solid var(--border-header);
+    box-shadow: var(--shadow-header);
+  }
 
-    header > div:first-child {
-        margin-bottom: 0.75rem !important;
-    }
+  .lang-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+    min-height: 40px;
+  }
 
-    .lang-btn {
-        padding: 4px 6px !important;
-        font-size: 9px !important;
-        white-space: nowrap !important;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.2 !important;
-        min-width: auto;
-        max-width: none;
-        flex-shrink: 0;
-    }
+  #source-lang-group,
+  #target-lang-group {
+    gap: 6px;
+  }
 
-    #source-lang-group,
-    #target-lang-group {
-        gap: 3px !important;
-        flex-wrap: nowrap !important;
-        overflow: hidden;
-    }
+  header [role="group"][aria-label="번역 언어 선택"] {
+    padding: 8px 12px;
+    gap: 6px;
+  }
 
-    /* 언어 선택 컨테이너 모바일 최적화 */
-    header [role="group"][aria-label="번역 언어 선택"] {
-        padding: 0.5rem 0.75rem !important;
-        gap: 0.25rem !important;
-        min-width: 0;
-    }
+  .toss-dark {
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
 
-    /* 화살표 아이콘 크기 조정 */
-    header [role="group"][aria-label="번역 언어 선택"] .fa-arrow-right,
-    header [role="group"][aria-label="번역 언어 선택"] i {
-        font-size: 8px !important;
-        margin: 0 2px !important;
-    }
+  #input-text {
+    min-height: 120px;
+    font-size: 15px;
+    padding: 12px;
+  }
 
-    body.is-mobile #input-text {
-        min-height: 120px;
-        font-size: 16px;
-    }
-
-    body.is-mobile #output-text {
-        font-size: 1.5rem;
-    }
-
-    body.is-mobile .toss-button {
-        width: 48px;
-        height: 48px;
-    }
+  #output-text {
+    font-size: 1.25rem;
+    padding: 12px;
+  }
 }
 
 /* 매우 작은 화면 (360px 이하) */
 @media (max-width: 360px) {
-    .lang-btn {
-        padding: 3px 5px !important;
-        font-size: 8px !important;
-    }
+  .container-wrapper {
+    padding: 8px;
+    padding-top: 0;
+  }
 
-    #source-lang-group,
-    #target-lang-group {
-        gap: 2px !important;
-    }
+  header {
+    padding: 12px;
+    margin-bottom: 0;
+    border-radius: 0;
+    background: var(--bg-header) !important;
+    border-bottom: 1px solid var(--border-header);
+    box-shadow: var(--shadow-header);
+  }
 
-    header [role="group"][aria-label="번역 언어 선택"] {
-        padding: 0.5rem !important;
-        gap: 0.25rem !important;
-    }
+  .lang-btn {
+    padding: 6px 10px;
+    font-size: 10px;
+    min-height: 36px;
+  }
 
-    header {
-        padding: 0.5rem !important;
-    }
+  #source-lang-group,
+  #target-lang-group {
+    gap: 4px;
+  }
+
+  header [role="group"][aria-label="번역 언어 선택"] {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .toss-dark {
+    padding: 12px;
+  }
+
+  #input-text {
+    min-height: 100px;
+    font-size: 14px;
+    padding: 10px;
+  }
 }
 
 /* 터치 디바이스 스타일 */
 @media (hover: none) and (pointer: coarse) {
-    .toss-button:active {
-        transform: scale(0.95);
-    }
+  .toss-button:active {
+    transform: scale(0.95);
+  }
 
-    .lang-btn:active {
-        transform: scale(0.98);
-    }
+  .lang-btn:active {
+    transform: scale(0.98);
+  }
 }
 
 /* 툴팁 스타일 */
+/* 툴팁 스타일 - 그레이톤 */
 .word-tooltip {
-    pointer-events: none;
-    user-select: none;
+  pointer-events: none;
+  user-select: none;
 }
 
 .tooltip-word {
-    transition: all 0.2s;
+  transition: all 0.2s;
 }
 
 .tooltip-word:hover {
-    background-color: rgba(59, 130, 246, 0.1);
-    border-radius: 2px;
+  background: var(--bg-card-hover);
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 단어 가이드 스타일 개선 */
+#word-guide-section {
+  border-radius: 20px;
+}
+
+#word-guide-content {
+  border-radius: 16px;
+}
+
+/* 결과 카드 스타일 개선 */
+#result-card {
+  border-radius: 20px;
+}
+
+/* Toast 스타일 개선 */
+#toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  border-radius: 16px;
+  color: var(--text-primary);
 }
 
 /* 단어장 테이블 스타일 */
 #vocabulary-table-container {
-    max-height: 600px;
-    overflow-y: auto;
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 16px;
 }
 
 #vocabulary-table-container table {
-    border-collapse: collapse;
+  border-collapse: collapse;
+  width: 100%;
 }
 
 #vocabulary-table-container th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: #1e1e1e;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
 }
 
 #vocabulary-table-container td,
 #vocabulary-table-container th {
-    padding: 0.75rem 1rem;
+  padding: 16px 12px;
+}
+
+#vocabulary-table-container tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition-smooth);
 }
 
 #vocabulary-table-container tr:hover {
-    background-color: rgba(59, 130, 246, 0.05);
+  background: var(--bg-card-hover);
 }
 
 /* 단어장 언어 탭 스타일 */
 [data-vocab-lang] {
-    transition: all 0.2s;
+  transition: var(--transition-smooth);
+  min-height: 44px;
+  border-radius: 12px;
 }
 
 [data-vocab-lang].active {
-    background-color: rgba(59, 130, 246, 0.2);
-    color: white;
-    border-color: #3b82f6;
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
 }
 
+/* 검색 입력 모바일 최적화 */
+#vocabulary-search-input {
+  min-height: 48px;
+  font-size: 15px;
+}
+
+/* 체크박스 모바일 최적화 */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+/* 페이지네이션 버튼 모바일 최적화 */
+#vocabulary-pagination button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 14px;
+}

@@ -342,3 +342,126 @@ async function executeTranslation() {
     }
 }
 
+// ============================
+// Realtime Translation (경량)
+// ============================
+
+const REALTIME_DEBOUNCE_MS = 400;
+let realtimeTimer = null;
+
+/**
+ * 실시간 번역 API 호출
+ */
+async function callRealtimeTranslation(text, sourceLang, targetLang) {
+    const prompt = buildTranslationPrompt(text, sourceLang, targetLang, 'normal');
+    const apiKey = state.apiKey || getApiKey();
+    const result = await callTranslationAPI(prompt, apiKey, CONFIG.MAX_RETRIES);
+    if (!result) return null;
+
+    return {
+        translatedText: result.translatedText || '',
+        detectedSource: result.detectedSource || sourceLang || 'auto'
+    };
+}
+
+/**
+ * 단어 가이드만 별도 호출
+ */
+async function callWordGuideOnly(text, lang) {
+    const prompt = `
+    Provide wordGuide only as JSON for the given text.
+    Text: "${text}"
+    Language: ${lang}
+    Output JSON: { "wordGuide": [ { "word": "...", "meaning": "...", "pronunciation": "...", "example": "..." } ] }
+    `;
+    const apiKey = state.apiKey || getApiKey();
+    const result = await callTranslationAPI(prompt, apiKey, CONFIG.MAX_RETRIES);
+    if (!result) return [];
+    return Array.isArray(result.wordGuide) ? result.wordGuide : [];
+}
+
+/**
+ * 실시간 입력 디바운스 처리
+ */
+function handleRealtimeInput(text) {
+    state.realtimeText = text;
+    if (realtimeTimer) clearTimeout(realtimeTimer);
+
+    if (!text.trim()) {
+        state.realtimeResult = '';
+        state.realtimeWordGuideSource = [];
+        state.realtimeWordGuideTarget = [];
+        renderRealtimeOutput();
+        renderRealtimeWordGuides();
+        return;
+    }
+
+    realtimeTimer = setTimeout(() => performRealtimeTranslation(text), REALTIME_DEBOUNCE_MS);
+}
+
+/**
+ * 실시간 번역 수행
+ */
+async function performRealtimeTranslation(text) {
+    const requestId = ++state.realtimeRequestId;
+    setRealtimeLoading(true);
+    try {
+        const res = await callRealtimeTranslation(text, state.realtimeSourceLang, state.realtimeTargetLang);
+        if (!res) {
+            if (requestId === state.realtimeRequestId) {
+                showToast(I18N[state.uiLang]?.translationError || '실시간 번역에 실패했습니다.');
+                setRealtimeLoading(false);
+            }
+            return;
+        }
+        if (requestId !== state.realtimeRequestId) return;
+
+        state.realtimeResult = res.translatedText || '';
+        state.realtimeDetectedSource = res.detectedSource || state.realtimeSourceLang;
+        renderRealtimeOutput();
+
+        const [sourceGuide, targetGuide] = await Promise.all([
+            callWordGuideOnly(text, state.realtimeDetectedSource || state.realtimeSourceLang),
+            callWordGuideOnly(state.realtimeResult, state.realtimeTargetLang)
+        ]);
+
+        if (requestId !== state.realtimeRequestId) return;
+
+        state.realtimeWordGuideSource = sourceGuide || [];
+        state.realtimeWordGuideTarget = targetGuide || [];
+        renderRealtimeWordGuides();
+    } catch (error) {
+        console.error('performRealtimeTranslation error:', error);
+        if (requestId === state.realtimeRequestId) {
+            showToast(I18N[state.uiLang]?.translationError || '실시간 번역에 실패했습니다.');
+        }
+    } finally {
+        if (requestId === state.realtimeRequestId) {
+            setRealtimeLoading(false);
+        }
+    }
+}
+
+/**
+ * 실시간 언어 설정
+ */
+function setRealtimeSourceLang(lang) {
+    state.realtimeSourceLang = lang;
+    updateRealtimeLangButtons();
+    if (state.realtimeText.trim()) performRealtimeTranslation(state.realtimeText);
+}
+
+function setRealtimeTargetLang(lang) {
+    state.realtimeTargetLang = lang;
+    updateRealtimeLangButtons();
+    if (state.realtimeText.trim()) performRealtimeTranslation(state.realtimeText);
+}
+
+function swapRealtimeLang() {
+    const prevSource = state.realtimeSourceLang;
+    state.realtimeSourceLang = state.realtimeTargetLang;
+    state.realtimeTargetLang = prevSource === 'auto' ? 'ko' : prevSource;
+    updateRealtimeLangButtons();
+    if (state.realtimeText.trim()) performRealtimeTranslation(state.realtimeText);
+}
+

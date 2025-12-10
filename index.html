@@ -17,50 +17,47 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="h-screen flex flex-col overflow-hidden bg-black">
-    <div class="container-wrapper h-full flex flex-col pt-4">
+<body class="h-screen flex flex-col overflow-hidden">
+    <div class="container-wrapper h-full flex flex-col">
 
         <!-- 1. Header & Global UI Switcher -->
-        <header class="toss-dark p-4 pb-2 shrink-0 rounded-b-2xl shadow-lg z-10 mb-4">
-            <div class="flex justify-between items-center mb-4">
-                <h1 onclick="showTranslationPage()" class="text-xl font-black text-blue-400 flex items-center gap-2 cursor-pointer hover:text-blue-300 transition">
+        <header class="toss-dark shrink-0 shadow-lg z-10 mb-3 header-full-width" style="padding: 4px 10px;">
+            <div class="flex justify-between items-center">
+                <h1 onclick="showTranslationPage()"
+                    class="text-base font-bold flex items-center gap-1.5 cursor-pointer transition"
+                    style="color: #ffffff !important;">
                     Nuance
                 </h1>
-                <div class="flex gap-2">
+                <div class="flex gap-1 items-center">
                     <!-- Vocabulary Button -->
-                    <button onclick="showVocabularyPage()"
-                        class="bg-black/30 p-2 rounded-full text-gray-400 hover:text-white transition"
+                    <button onclick="showVocabularyPage()" class="p-1 transition"
+                        style="background: transparent; color: var(--text-header-secondary); border-radius: 0; border: 1px solid transparent;"
+                        onmouseover="this.style.background='var(--bg-header-hover)'; this.style.color='var(--text-header)'; this.style.borderColor='var(--border-header)'"
+                        onmouseout="this.style.background='transparent'; this.style.color='var(--text-header-secondary)'; this.style.borderColor='transparent'"
                         aria-label="단어장" title="단어장">
-                        <i class="fas fa-book" aria-hidden="true"></i>
+                        <i class="fas fa-book text-sm" aria-hidden="true"></i>
+                    </button>
+                    <!-- Realtime Translate Button -->
+                    <button onclick="showRealtimePage()" class="p-1 transition"
+                        style="background: transparent; color: var(--text-header-secondary); border-radius: 0; border: 1px solid transparent;"
+                        onmouseover="this.style.background='var(--bg-header-hover)'; this.style.color='var(--text-header)'; this.style.borderColor='var(--border-header)'"
+                        onmouseout="this.style.background='transparent'; this.style.color='var(--text-header-secondary)'; this.style.borderColor='transparent'"
+                        aria-label="실시간 번역" title="실시간 번역">
+                        <i class="fas fa-bolt text-sm" aria-hidden="true"></i>
                     </button>
                     <!-- UI Language Switcher -->
-                    <div class="flex gap-2 bg-black/30 p-1.5 rounded-full" role="group" aria-label="UI 언어 선택">
-                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-lg" aria-label="한국어"
+                    <div class="flex gap-0.5" role="group" aria-label="UI 언어 선택"
+                        style="background: transparent; border-radius: 0;">
+                        <button onclick="setUILang('ko')" class="ui-lang-btn active text-base" aria-label="한국어"
                             title="한국어">🇰🇷</button>
-                        <button onclick="setUILang('th')" class="ui-lang-btn text-lg" aria-label="태국어"
+                        <button onclick="setUILang('th')" class="ui-lang-btn text-base" aria-label="태국어"
                             title="태국어">🇹🇭</button>
-                        <button onclick="setUILang('en')" class="ui-lang-btn text-lg" aria-label="영어"
+                        <button onclick="setUILang('en')" class="ui-lang-btn text-base" aria-label="영어"
                             title="영어">🇺🇸</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Trans Language Selector -->
-            <div class="flex items-center justify-between bg-black/30 p-1.5 rounded-xl mb-2" role="group"
-                aria-label="번역 언어 선택">
-                <div class="flex gap-1" id="source-lang-group" role="group" aria-label="원본 언어">
-                    <button data-lang="auto" class="lang-btn active" data-i18n="auto" aria-pressed="true">자동</button>
-                    <button data-lang="ko" class="lang-btn" data-i18n="ko" aria-pressed="false">한국어</button>
-                    <button data-lang="th" class="lang-btn" data-i18n="th" aria-pressed="false">태국어</button>
-                    <button data-lang="en" class="lang-btn" data-i18n="en" aria-pressed="false">영어</button>
-                </div>
-                <i class="fas fa-arrow-right text-gray-600 text-xs mx-1" aria-hidden="true"></i>
-                <div class="flex gap-1" id="target-lang-group" role="group" aria-label="번역 언어">
-                    <button data-lang="th" class="lang-btn active" data-i18n="th" aria-pressed="true">태국어</button>
-                    <button data-lang="en" class="lang-btn" data-i18n="en" aria-pressed="false">영어</button>
-                    <button data-lang="ko" class="lang-btn" data-i18n="ko" aria-pressed="false">한국어</button>
-                </div>
-            </div>
         </header>
 
         <!-- 2. Main Content -->
@@ -68,140 +65,254 @@
 
             <!-- Translation Section -->
             <div id="translation-section">
-            <!-- Persona Settings (Simplified) -->
-            <div class="toss-dark p-4 rounded-2xl border border-gray-800 space-y-3">
-                <!-- Nuance (뉘앙스) -->
-                <div>
-                    <h2
-                        class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
-                        <i class="fas fa-sliders text-purple-400"></i> <span data-i18n="nuance">뉘앙스 (Tone)</span>
-                    </h2>
-                    <div class="grid gap-2" id="nuance-group" style="grid-template-columns: repeat(2, 1fr);">
-                        <button data-tone="polite"
-                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white active border-2 border-transparent transition-all">
-                            🙏 <span data-i18n="polite">예의 바르게</span>
-                        </button>
-                        <button data-tone="normal"
-                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                            😐 <span data-i18n="normal">보통</span>
-                        </button>
-                        <button data-tone="casual"
-                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                            ☕ <span data-i18n="casual">편안하게</span>
-                        </button>
-                        <button data-tone="playful"
-                            class="p-3 bg-[#2c2c2c] rounded-xl text-xs font-bold text-gray-400 hover:text-white border-2 border-transparent transition-all">
-                            😜 <span data-i18n="playful">장난스럽게</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Input Area -->
-            <div id="input-area"
-                class="toss-dark p-5 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden">
-                <!-- 입력창 -->
-                <div class="relative">
-                    <textarea id="input-text"
-                        class="w-full p-0 rounded-none text-lg leading-relaxed resize-none shadow-none bg-transparent border-none focus:outline-none text-white placeholder-gray-500"
-                        placeholder="여기에 내용을 입력하세요..." aria-label="번역할 텍스트 입력" aria-describedby="input-hint"></textarea>
-                    <span id="input-hint" class="sr-only">Ctrl+Enter를 눌러 번역할 수 있습니다</span>
-
-                    <button onclick="clearInput()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-400 p-2"
-                        aria-label="입력 내용 지우기" title="지우기">
-                        <i class="fas fa-times-circle text-xl" aria-hidden="true"></i>
-                    </button>
-                    <button onclick="executeTranslation()"
-                        class="absolute bottom-3 right-3 toss-button text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30"
-                        aria-label="번역 실행" title="번역 (Ctrl+Enter)">
-                        <i class="fas fa-paper-plane text-lg" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Result Area -->
-            <div id="result-card" class="hidden animate-pulse">
-                <div class="toss-dark p-5 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-3">
-                        <span id="detected-lang-label"
-                            class="text-[10px] font-bold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">DETECTED</span>
-                        <div class="flex gap-3">
-                            <button onclick="copyResult()" class="text-gray-500 hover:text-white" aria-label="결과 복사"
-                                title="복사">
-                                <i class="far fa-copy" aria-hidden="true"></i>
+                <!-- Input Summary Bar -->
+                <div class="toss-dark rounded-xl px-4 py-3 mb-3"
+                    style="border: 1px solid var(--border-color); background: var(--bg-secondary);">
+                    <div class="flex items-center justify-between gap-4" role="group" aria-label="번역 설정">
+                        <!-- 출발어/도착어 -->
+                        <div class="flex items-center gap-3 flex-1" id="language-selector">
+                            <button id="source-trigger" class="translation-setting-btn" aria-haspopup="true">
+                                <span id="source-label" class="font-medium">출발어: 자동</span>
+                                <i class="fas fa-chevron-down text-[10px] ml-1.5 opacity-70"></i>
                             </button>
-                            <button onclick="playTTS(state.lastResult, state.lastLang)"
-                                class="text-blue-400 hover:text-blue-300" aria-label="음성 재생" title="음성 재생">
-                                <i id="tts-icon" class="fas fa-volume-high text-xl" aria-hidden="true"></i>
+                            <i class="fas fa-arrow-right text-sm opacity-50" aria-hidden="true"
+                                style="color: var(--text-tertiary);"></i>
+                            <button id="target-trigger" class="translation-setting-btn" aria-haspopup="true">
+                                <span id="target-label" class="font-medium">도착어: 태국어</span>
+                                <i class="fas fa-chevron-down text-[10px] ml-1.5 opacity-70"></i>
+                            </button>
+                        </div>
+                        <!-- 뉘앙스 -->
+                        <div class="flex items-center gap-2" id="nuance-wrapper" style="white-space: nowrap;">
+                            <div class="h-4 w-px opacity-30" style="background: var(--border-color);"></div>
+                            <button id="tone-trigger" class="translation-setting-btn" aria-haspopup="true">
+                                <span id="tone-label" class="font-medium">뉘앙스: 예의 바르게</span>
+                                <i class="fas fa-chevron-down text-[10px] ml-1.5 opacity-70"></i>
                             </button>
                         </div>
                     </div>
-                    <p id="output-text" class="text-2xl font-bold text-white leading-relaxed thai-font break-words"></p>
+                </div>
 
-                    <!-- Word Guide Section -->
-                    <div id="word-guide-section" class="hidden mt-4 pt-4 border-t border-gray-700">
-                        <button onclick="toggleWordGuide()"
-                            class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition mb-3"
-                            aria-expanded="false" aria-controls="word-guide-content">
-                            <i class="fas fa-book text-xs" aria-hidden="true"></i>
-                            <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
-                            <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"
-                                aria-hidden="true"></i>
+                <!-- Input Area -->
+                <div id="input-area" class="toss-dark rounded-2xl relative overflow-hidden">
+                    <!-- 입력창 -->
+                    <div class="relative">
+                        <textarea id="input-text"
+                            class="w-full p-0 rounded-none text-lg leading-relaxed resize-none shadow-none bg-transparent border-none focus:outline-none"
+                            style="color: var(--text-primary);" placeholder="여기에 내용을 입력하세요..." aria-label="번역할 텍스트 입력"></textarea>
+
+                        <button onclick="clearInput()" class="absolute top-3 right-3 p-2 transition"
+                            style="color: var(--text-tertiary);" onmouseover="this.style.color='var(--text-secondary)'"
+                            onmouseout="this.style.color='var(--text-tertiary)'" aria-label="입력 내용 지우기" title="지우기">
+                            <i class="fas fa-times-circle text-xl" aria-hidden="true"></i>
                         </button>
-                        <div id="word-guide-content" class="hidden space-y-2">
-                            <!-- Word guide items will be inserted here -->
+                        <button onclick="executeTranslation()"
+                            class="absolute bottom-3 right-3 toss-button w-12 h-12 rounded-full flex items-center justify-center"
+                            style="color: #ffffff;" aria-label="번역 실행" title="번역 (Ctrl+Enter)">
+                            <i class="fas fa-paper-plane text-lg" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Result Area -->
+                <div id="result-card" class="hidden animate-pulse">
+                    <div class="toss-dark rounded-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <span id="detected-lang-label" class="text-[10px] font-bold px-2 py-1 rounded"
+                                style="background: var(--bg-card-hover); color: var(--accent-primary);">DETECTED</span>
+                            <div class="flex gap-3">
+                                <button onclick="copyResult()" class="transition" style="color: var(--text-secondary);"
+                                    onmouseover="this.style.color='var(--text-primary)'"
+                                    onmouseout="this.style.color='var(--text-secondary)'" aria-label="결과 복사" title="복사">
+                                    <i class="far fa-copy" aria-hidden="true"></i>
+                                </button>
+                                <button onclick="playTTS(state.lastResult, state.lastLang)" class="transition"
+                                    style="color: var(--accent-primary);"
+                                    onmouseover="this.style.color='var(--accent-hover)'"
+                                    onmouseout="this.style.color='var(--accent-primary)'" aria-label="음성 재생"
+                                    title="음성 재생">
+                                    <i id="tts-icon" class="fas fa-volume-high text-xl" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                        <p id="output-text" class="text-2xl font-bold leading-relaxed thai-font break-words"
+                            style="color: var(--text-primary);"></p>
 
-                    <!-- Error Log -->
-                    <div id="error-log"
-                        class="hidden mt-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-xs text-red-300 font-mono break-all">
-                    </div>
+                        <!-- Word Guide Section -->
+                        <div id="word-guide-section" class="hidden mt-4 pt-4"
+                            style="border-top: 1px solid var(--border-color);">
+                            <button onclick="toggleWordGuide()" class="flex items-center gap-2 text-sm transition mb-3"
+                                style="color: var(--accent-primary);"
+                                onmouseover="this.style.color='var(--accent-hover)'"
+                                onmouseout="this.style.color='var(--accent-primary)'" aria-expanded="false"
+                                aria-controls="word-guide-content">
+                                <i class="fas fa-book text-xs" aria-hidden="true"></i>
+                                <span id="word-guide-toggle-text" data-i18n="wordGuide">단어/표현 안내</span>
+                                <i id="word-guide-icon" class="fas fa-chevron-down text-xs transition-transform"
+                                    aria-hidden="true"></i>
+                            </button>
+                            <div id="word-guide-content" class="hidden space-y-2">
+                                <!-- Word guide items will be inserted here -->
+                            </div>
+                        </div>
 
-                    <!-- Loading -->
-                    <div id="loading-spinner"
-                        class="hidden absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                        <div class="flex flex-col items-center">
-                            <i class="fas fa-circle-notch fa-spin text-3xl text-blue-500 mb-2"></i>
-                            <span class="text-xs text-blue-200 font-bold pulse-text" data-i18n="translating">AI 번역
-                                중...</span>
+                        <!-- Error Log -->
+                        <div id="error-log" class="hidden mt-4 p-3 rounded-lg text-xs font-mono break-all"
+                            style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #dc2626;">
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loading-spinner"
+                            class="hidden absolute inset-0 flex items-center justify-center backdrop-blur-sm"
+                            style="background: rgba(245, 245, 245, 0.9);">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-circle-notch fa-spin text-3xl mb-2"
+                                    style="color: var(--accent-primary);"></i>
+                                <span class="text-xs font-bold pulse-text" data-i18n="translating"
+                                    style="color: var(--text-primary);">AI 번역
+                                    중...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Realtime Translation Section -->
+            <div id="realtime-section" class="hidden">
+                <!-- Language Selector -->
+                <div class="toss-dark rounded-2xl p-3 mb-3" style="border: 1px solid var(--border-color);">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold uppercase" style="color: var(--text-secondary);">입력</span>
+                            <div class="flex gap-1">
+                                <button data-rt-lang="auto" class="lang-btn rt-source active" aria-pressed="true">자동</button>
+                                <button data-rt-lang="ko" class="lang-btn rt-source" aria-pressed="false">한국어</button>
+                                <button data-rt-lang="th" class="lang-btn rt-source" aria-pressed="false">태국어</button>
+                                <button data-rt-lang="en" class="lang-btn rt-source" aria-pressed="false">영어</button>
+                            </div>
+                        </div>
+
+                        <button id="rt-swap-btn" class="p-1 transition" aria-label="언어 교체"
+                            style="color: var(--text-secondary);"
+                            onmouseover="this.style.color='var(--text-primary)'"
+                            onmouseout="this.style.color='var(--text-secondary)'">
+                            <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                        </button>
+
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold uppercase" style="color: var(--text-secondary);">출력</span>
+                            <div class="flex gap-1">
+                                <button data-rt-lang="th" class="lang-btn rt-target active" aria-pressed="true">태국어</button>
+                                <button data-rt-lang="en" class="lang-btn rt-target" aria-pressed="false">영어</button>
+                                <button data-rt-lang="ko" class="lang-btn rt-target" aria-pressed="false">한국어</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input / Output -->
+                <div class="grid md:grid-cols-2 gap-3">
+                    <!-- Realtime Input -->
+                    <div class="toss-dark rounded-2xl p-3 relative" style="border: 1px solid var(--border-color);">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-semibold" style="color: var(--text-secondary);">입력</span>
+                            <div class="flex gap-2">
+                                <button id="rt-input-copy" class="transition" aria-label="입력 복사"
+                                    style="color: var(--text-tertiary);" onmouseover="this.style.color='var(--text-secondary)'"
+                                    onmouseout="this.style.color='var(--text-tertiary)'"><i class="far fa-copy"></i></button>
+                                <button id="rt-input-tts" class="transition" aria-label="입력 TTS"
+                                    style="color: var(--accent-primary);" onmouseover="this.style.color='var(--accent-hover)'"
+                                    onmouseout="this.style.color='var(--accent-primary)'"><i class="fas fa-volume-high"></i></button>
+                                <button id="rt-input-clear" class="transition" aria-label="입력 지우기"
+                                    style="color: var(--text-tertiary);" onmouseover="this.style.color='var(--text-secondary)'"
+                                    onmouseout="this.style.color='var(--text-tertiary)'"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <textarea id="rt-input" class="w-full bg-transparent border-none focus:outline-none resize-none"
+                            rows="8" placeholder="실시간 번역할 텍스트를 입력하세요..." style="color: var(--text-primary);"></textarea>
+                    </div>
+
+                    <!-- Realtime Output -->
+                    <div class="toss-dark rounded-2xl p-3 relative" style="border: 1px solid var(--border-color);">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold" style="color: var(--text-secondary);">출력</span>
+                                <span id="rt-detected" class="text-[10px] font-bold px-2 py-1 rounded hidden"
+                                    style="background: var(--bg-card-hover); color: var(--accent-primary);">DETECTED</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="rt-output-copy" class="transition" aria-label="출력 복사"
+                                    style="color: var(--text-tertiary);" onmouseover="this.style.color='var(--text-secondary)'"
+                                    onmouseout="this.style.color='var(--text-tertiary)'"><i class="far fa-copy"></i></button>
+                                <button id="rt-output-tts" class="transition" aria-label="출력 TTS"
+                                    style="color: var(--accent-primary);" onmouseover="this.style.color='var(--accent-hover)'"
+                                    onmouseout="this.style.color='var(--accent-primary)'"><i class="fas fa-volume-high"></i></button>
+                            </div>
+                        </div>
+                        <div id="rt-output" class="min-h-[160px] whitespace-pre-wrap leading-relaxed"
+                            style="color: var(--text-primary);"></div>
+                        <div id="rt-loading" class="hidden absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-circle-notch fa-spin text-2xl" style="color: var(--accent-primary);"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Guides -->
+                <div class="grid md:grid-cols-2 gap-3 mt-3">
+                    <div class="toss-dark rounded-2xl p-3" style="border: 1px solid var(--border-color);">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold" style="color: var(--text-secondary);">출발어 단어/표현 안내</span>
+                            <span id="rt-source-count" class="text-xs" style="color: var(--text-tertiary);"></span>
+                        </div>
+                        <div id="rt-word-guide-source" class="space-y-2"></div>
+                    </div>
+                    <div class="toss-dark rounded-2xl p-3" style="border: 1px solid var(--border-color);">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold" style="color: var(--text-secondary);">도착어 단어/표현 안내</span>
+                            <span id="rt-target-count" class="text-xs" style="color: var(--text-tertiary);"></span>
+                        </div>
+                        <div id="rt-word-guide-target" class="space-y-2"></div>
+                    </div>
+                </div>
             </div>
             <!-- End Translation Section -->
 
             <!-- Vocabulary Section -->
             <div id="vocabulary-section" class="hidden">
-                <div class="toss-dark p-5 rounded-2xl border border-gray-700 shadow-2xl">
+                <div class="toss-dark rounded-2xl">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                            <i class="fas fa-book text-blue-400"></i>
+                        <h2 class="text-xl font-bold flex items-center gap-2" style="color: var(--text-primary);">
+                            <i class="fas fa-book" style="color: var(--accent-primary);"></i>
                             <span data-i18n="vocabulary">단어장</span>
                         </h2>
-                        <button onclick="showTranslationPage()"
-                            class="text-gray-400 hover:text-white transition"
-                            aria-label="번역 페이지로 돌아가기" title="번역 페이지로">
+                        <button onclick="showTranslationPage()" class="transition" style="color: var(--text-secondary);"
+                            onmouseover="this.style.color='var(--text-primary)'"
+                            onmouseout="this.style.color='var(--text-secondary)'" aria-label="번역 페이지로 돌아가기"
+                            title="번역 페이지로">
                             <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
 
                     <!-- Language Tabs -->
                     <div class="flex gap-2 mb-4">
-                        <button data-vocab-lang="th"
-                            onclick="loadAndDisplayVocabulary('th')"
-                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition active bg-blue-900/20 text-white border-blue-500">
+                        <button data-vocab-lang="th" onclick="loadAndDisplayVocabulary('th')"
+                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition active"
+                            style="background: var(--accent-primary); color: #ffffff; border-color: var(--accent-primary);">
                             🇹🇭 태국어
                         </button>
-                        <button data-vocab-lang="en"
-                            onclick="loadAndDisplayVocabulary('en')"
-                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition text-gray-400 hover:text-white">
+                        <button data-vocab-lang="en" onclick="loadAndDisplayVocabulary('en')"
+                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition"
+                            style="color: var(--text-secondary); background: var(--bg-secondary); border-color: var(--border-color);"
+                            onmouseover="this.style.color='var(--text-primary)'; this.style.background='var(--bg-card-hover)'"
+                            onmouseout="this.style.color='var(--text-secondary)'; this.style.background='var(--bg-secondary)'">
                             🇺🇸 영어
                         </button>
-                        <button data-vocab-lang="ko"
-                            onclick="loadAndDisplayVocabulary('ko')"
-                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition text-gray-400 hover:text-white">
+                        <button data-vocab-lang="ko" onclick="loadAndDisplayVocabulary('ko')"
+                            class="px-4 py-2 rounded-lg border-2 border-transparent text-sm font-bold transition"
+                            style="color: var(--text-secondary); background: var(--bg-secondary); border-color: var(--border-color);"
+                            onmouseover="this.style.color='var(--text-primary)'; this.style.background='var(--bg-card-hover)'"
+                            onmouseout="this.style.color='var(--text-secondary)'; this.style.background='var(--bg-secondary)'">
                             🇰🇷 한국어
                         </button>
                     </div>
@@ -210,27 +321,56 @@
                     <div class="flex gap-2 mb-4">
                         <div class="flex-1 relative">
                             <input type="text" id="vocabulary-search-input"
-                                class="w-full p-3 rounded-xl toss-input text-sm border border-gray-700 focus:border-blue-500 bg-gray-800/50 text-white"
-                                placeholder="원문, 의미, 발음으로 검색..."
-                                data-i18n-placeholder="searchPlaceholder">
-                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                class="w-full p-3 rounded-xl toss-input text-sm"
+                                style="border-color: var(--border-color); color: var(--text-primary);"
+                                placeholder="원문, 의미, 발음으로 검색..." data-i18n-placeholder="searchPlaceholder">
+                            <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2"
+                                style="color: var(--text-tertiary);"></i>
                         </div>
-                        <button id="vocabulary-delete-selected-btn" onclick="deleteSelectedWords()"
-                            class="px-4 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-500 transition hidden"
-                            data-i18n="deleteSelected">
-                            선택 삭제
+                        <button id="vocabulary-delete-selected-btn" onclick="showDeleteConfirmModal()"
+                            class="p-3 rounded-xl transition hidden" style="background: #ef4444; color: #ffffff;"
+                            onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'"
+                            aria-label="선택 삭제" title="선택 삭제">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
 
                     <!-- Loading Indicator -->
                     <div id="vocabulary-loading" class="hidden text-center py-8">
-                        <i class="fas fa-circle-notch fa-spin text-2xl text-blue-500 mb-2"></i>
-                        <p class="text-sm text-gray-400" data-i18n="loadingWords">단어를 불러오는 중...</p>
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2" style="color: var(--accent-primary);"></i>
+                        <p class="text-sm" data-i18n="loadingWords" style="color: var(--text-secondary);">단어를 불러오는 중...
+                        </p>
                     </div>
 
                     <!-- Vocabulary Table Container -->
                     <div id="vocabulary-table-container" class="overflow-x-auto mb-4">
                         <!-- Table will be rendered here -->
+                    </div>
+
+                    <!-- Delete Confirm Modal -->
+                    <div id="delete-confirm-modal"
+                        class="fixed inset-0 hidden items-center justify-center z-50"
+                        style="background: rgba(0,0,0,0.45);">
+                        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm"
+                            style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color);">
+                            <div class="text-base font-bold mb-3" data-i18n="confirmDeleteSelected">선택한 항목을 삭제하시겠습니까?</div>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="hideDeleteConfirmModal()"
+                                    class="px-4 py-2 rounded-lg border text-sm font-bold transition"
+                                    style="color: var(--text-secondary); border-color: var(--border-color); background: var(--bg-secondary);"
+                                    onmouseover="this.style.background='var(--bg-card-hover)'"
+                                    onmouseout="this.style.background='var(--bg-secondary)'">
+                                    취소
+                                </button>
+                                <button type="button" onclick="deleteSelectedWords(true)"
+                                    class="px-4 py-2 rounded-lg text-sm font-bold transition"
+                                    style="background: #ef4444; color: #ffffff;"
+                                    onmouseover="this.style.background='#dc2626'"
+                                    onmouseout="this.style.background='#ef4444'">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Pagination -->
@@ -246,10 +386,33 @@
 
     <!-- Toast Notification -->
     <div id="toast" class="hidden fixed bottom-6 right-6 z-50">
-        <div
-            class="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl border border-gray-700 flex items-center gap-3">
+        <div class="px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3"
+            style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color);">
             <i class="fas fa-check-circle text-green-400"></i>
             <span id="toast-message" class="text-sm font-medium"></span>
+        </div>
+    </div>
+
+    <!-- Selector Modal -->
+    <div id="selector-modal-backdrop"
+        class="fixed inset-0 hidden items-start justify-start z-50"
+        style="background: rgba(0,0,0,0.35);">
+        <div id="selector-modal"
+            class="bg-white rounded-xl shadow-lg w-full max-w-xs"
+            style="position: absolute; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color);">
+            <div class="flex items-center justify-between px-4 py-3 border-b"
+                style="border-color: var(--border-color);">
+                <div id="selector-modal-title" class="text-sm font-bold">선택</div>
+                <button id="selector-modal-close" class="p-1 transition" aria-label="닫기"
+                    style="color: var(--text-tertiary);"
+                    onmouseover="this.style.color='var(--text-secondary)'"
+                    onmouseout="this.style.color='var(--text-tertiary)'">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+            <div id="selector-modal-list" class="max-h-64 overflow-y-auto py-2">
+                <!-- options will be injected -->
+            </div>
         </div>
     </div>
 

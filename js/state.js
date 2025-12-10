@@ -19,7 +19,19 @@ let state = {
     currentTargetLang: '',
     // 단어장 관련 상태
     savedWords: [], // 저장된 단어 ID 목록 (캐시)
-    currentPage: 'translation', // 'translation' 또는 'vocabulary'
-    currentVocabularyLanguage: 'th' // 현재 선택된 언어
+    currentPage: 'translation', // 'translation' | 'vocabulary' | 'realtime'
+    currentVocabularyLanguage: 'th', // 현재 선택된 언어
+    // 실시간 번역 관련 상태
+    realtimeSourceLang: 'auto',
+    realtimeTargetLang: 'th',
+    realtimeText: '',
+    realtimeResult: '',
+    realtimeDetectedSource: '',
+    realtimeWordGuideSource: [],
+    realtimeWordGuideTarget: [],
+    realtimeRequestId: 0,
+    // 선택 모달
+    selectorModalOpen: false,
+    selectorModalType: null
 };
 

@@ -145,6 +145,125 @@ function copyResult() {
 }
 
 /**
+ * 선택 모달 관리
+ */
+const MODAL_OPTIONS = {
+    source: [
+        { value: 'auto', label: '자동' },
+        { value: 'ko', label: '한국어' },
+        { value: 'th', label: '태국어' },
+        { value: 'en', label: '영어' },
+    ],
+    target: [
+        { value: 'th', label: '태국어' },
+        { value: 'en', label: '영어' },
+        { value: 'ko', label: '한국어' },
+    ],
+    tone: [
+        { value: 'polite', label: '예의 바르게' },
+        { value: 'normal', label: '보통' },
+        { value: 'casual', label: '편안하게' },
+        { value: 'playful', label: '장난스럽게' },
+    ]
+};
+
+function updateLangToneLabels() {
+    const sourceLabel = document.getElementById('source-label');
+    const targetLabel = document.getElementById('target-label');
+    const toneLabel = document.getElementById('tone-label');
+    const summarySource = document.getElementById('summary-source-label');
+    const summaryTarget = document.getElementById('summary-target-label');
+    const summaryTone = document.getElementById('summary-tone-label');
+    const findLabel = (type, val) => (MODAL_OPTIONS[type].find(o => o.value === val) || {}).label || val;
+    if (sourceLabel) safeSetText(sourceLabel, `출발어: ${findLabel('source', state.sourceLang)}`);
+    if (targetLabel) safeSetText(targetLabel, `도착어: ${findLabel('target', state.targetLang)}`);
+    if (toneLabel) safeSetText(toneLabel, `뉘앙스: ${findLabel('tone', state.tone)}`);
+    if (summarySource) safeSetText(summarySource, `출발어: ${findLabel('source', state.sourceLang)}`);
+    if (summaryTarget) safeSetText(summaryTarget, `도착어: ${findLabel('target', state.targetLang)}`);
+    if (summaryTone) safeSetText(summaryTone, `뉘앙스: ${findLabel('tone', state.tone)}`);
+}
+
+function positionModalNearTrigger(modalEl, triggerEl) {
+    if (!modalEl || !triggerEl) return;
+    const rect = triggerEl.getBoundingClientRect();
+    const modalWidth = 280;
+    const padding = 8;
+    // 모달을 트리거 버튼의 오른쪽 끝에서 모달 너비만큼 왼쪽으로 배치
+    const leftOffset = rect.width - modalWidth; // 버튼 너비에서 모달 너비를 뺀 값만큼 왼쪽으로
+    const left = Math.min(
+        Math.max(rect.left + window.scrollX + leftOffset, padding),
+        window.innerWidth - modalWidth - padding
+    );
+    const top = rect.bottom + window.scrollY + 8;
+    modalEl.style.width = `${modalWidth}px`;
+    modalEl.style.top = `${top}px`;
+    modalEl.style.left = `${left}px`;
+}
+
+function openSelectorModal(type, triggerEl) {
+    const backdrop = document.getElementById('selector-modal-backdrop');
+    const list = document.getElementById('selector-modal-list');
+    const title = document.getElementById('selector-modal-title');
+    if (!backdrop || !list || !title) return;
+
+    state.selectorModalOpen = true;
+    state.selectorModalType = type;
+
+    title.textContent = type === 'source' ? '출발어 선택' : type === 'target' ? '도착어 선택' : '뉘앙스 선택';
+    list.innerHTML = '';
+    const currentVal = type === 'source' ? state.sourceLang : type === 'target' ? state.targetLang : state.tone;
+    MODAL_OPTIONS[type].forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left px-4 py-2 hover:bg-gray-100 transition flex items-center justify-between';
+        btn.innerHTML = `<span>${opt.label}</span>${opt.value === currentVal ? '<i class="fas fa-check text-xs"></i>' : ''}`;
+        btn.onclick = () => {
+            if (type === 'source') state.sourceLang = opt.value;
+            if (type === 'target') state.targetLang = opt.value;
+            if (type === 'tone') state.tone = opt.value;
+            updateLangToneLabels();
+            closeSelectorModal();
+            // 톤/언어 변경 시 기존 번역 적용
+            if (type === 'tone' && state.lastResult) {
+                // no-op for now
+            }
+        };
+        list.appendChild(btn);
+    });
+
+    backdrop.classList.remove('hidden');
+    backdrop.classList.add('flex');
+
+    const modal = document.getElementById('selector-modal');
+    positionModalNearTrigger(modal, triggerEl || document.body);
+}
+
+function closeSelectorModal() {
+    const backdrop = document.getElementById('selector-modal-backdrop');
+    if (!backdrop) return;
+    state.selectorModalOpen = false;
+    state.selectorModalType = null;
+    backdrop.classList.add('hidden');
+    backdrop.classList.remove('flex');
+}
+
+/**
+ * 임의 텍스트 복사
+ */
+async function copyText(text) {
+    if (!text) {
+        showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(I18N[state.uiLang]?.copied || "Copied!");
+    } catch (error) {
+        console.error('copyText error:', error);
+        showToast(I18N[state.uiLang]?.copyFailed || "Copy failed");
+    }
+}
+
+/**
  * TTS 재생
  * @param {string} text - 재생할 텍스트
  * @param {string} lang - 언어 코드
@@ -343,16 +462,19 @@ function showTooltip(event, wordData) {
 
     // 툴팁 요소 생성
     const tooltip = document.createElement('div');
-    tooltip.className = 'word-tooltip fixed z-50 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700 p-3 max-w-xs pointer-events-none';
+    tooltip.className = 'word-tooltip fixed z-50 rounded-lg shadow-xl p-3 max-w-xs pointer-events-none';
+    tooltip.style.background = 'var(--bg-card)';
+    tooltip.style.color = 'var(--text-primary)';
+    tooltip.style.border = '1px solid var(--border-color)';
     tooltip.style.opacity = '0';
     tooltip.style.transition = 'opacity 0.2s';
 
     // 툴팁 내용 구성
     let tooltipHTML = `<div class="font-bold text-sm mb-2">${escapeHtml(wordData.word || '')}</div>`;
-    tooltipHTML += `<div class="text-xs text-gray-300 mb-1"><span class="text-gray-500">${I18N[state.uiLang]?.meaning || '의미'}:</span> ${escapeHtml(wordData.meaning || '')}</div>`;
+    tooltipHTML += `<div class="text-xs mb-1" style="color: var(--text-secondary);"><span style="color: var(--text-tertiary);">${I18N[state.uiLang]?.meaning || '의미'}:</span> ${escapeHtml(wordData.meaning || '')}</div>`;
 
     if (wordData.pronunciation) {
-        tooltipHTML += `<div class="text-xs text-blue-300"><span class="text-gray-500">${I18N[state.uiLang]?.pronunciation || '발음'}:</span> ${escapeHtml(wordData.pronunciation)}</div>`;
+        tooltipHTML += `<div class="text-xs" style="color: var(--accent-primary);"><span style="color: var(--text-tertiary);">${I18N[state.uiLang]?.pronunciation || '발음'}:</span> ${escapeHtml(wordData.pronunciation)}</div>`;
     }
 
     tooltip.innerHTML = tooltipHTML;
@@ -512,7 +634,9 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
     wordGuide.forEach((item, index) => {
         try {
             const wordItem = document.createElement('div');
-            wordItem.className = 'p-3 bg-gray-800/50 rounded-lg border border-gray-700';
+            wordItem.className = 'p-3 rounded-lg';
+            wordItem.style.background = 'var(--bg-secondary)';
+            wordItem.style.border = '1px solid var(--border-color)';
 
             // Container div
             const container = document.createElement('div');
@@ -520,7 +644,8 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
             // Number span
             const numberSpan = document.createElement('span');
-            numberSpan.className = 'text-blue-400 font-bold text-xs min-w-[24px]';
+            numberSpan.className = 'font-bold text-xs min-w-[24px]';
+            numberSpan.style.color = 'var(--accent-primary)';
             safeSetText(numberSpan, `${index + 1}.`);
 
             // Content div
@@ -531,14 +656,16 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
             const wordDiv = document.createElement('div');
             wordDiv.className = 'flex items-center gap-2 mb-1';
             const wordSpan = document.createElement('span');
-            wordSpan.className = 'font-bold text-white text-sm tooltip-word cursor-help';
+            wordSpan.className = 'font-bold text-sm tooltip-word cursor-help';
+            wordSpan.style.color = 'var(--text-primary)';
             wordSpan.setAttribute('data-word-info', JSON.stringify(item));
 
             if (hasThaiWords && item.pronunciation) {
                 // 태국어 단어 표시
                 safeSetText(wordSpan, item.word || '');
                 const pronunciationSpan = document.createElement('span');
-                pronunciationSpan.className = 'text-blue-300 font-medium';
+                pronunciationSpan.className = 'font-medium';
+                pronunciationSpan.style.color = 'var(--accent-primary)';
                 safeSetText(pronunciationSpan, ` (${item.pronunciation})`);
                 wordSpan.appendChild(pronunciationSpan);
             } else {
@@ -567,9 +694,12 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
                 // TTS 버튼
                 const wordTTSButton = document.createElement('button');
-                wordTTSButton.className = 'text-blue-400 hover:text-blue-300 transition';
+                wordTTSButton.className = 'transition';
+                wordTTSButton.style.color = 'var(--accent-primary)';
                 wordTTSButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
                 wordTTSButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
+                wordTTSButton.onmouseover = function() { this.style.color = 'var(--accent-hover)'; };
+                wordTTSButton.onmouseout = function() { this.style.color = 'var(--accent-primary)'; };
                 const wordTTSIcon = document.createElement('i');
                 wordTTSIcon.className = 'fas fa-volume-high text-xs';
                 wordTTSIcon.setAttribute('aria-hidden', 'true');
@@ -583,9 +713,12 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
                 // 저장 버튼
                 const saveButton = document.createElement('button');
-                saveButton.className = 'text-yellow-400 hover:text-yellow-300 transition';
+                saveButton.className = 'transition';
+                saveButton.style.color = 'var(--accent-secondary)';
                 saveButton.setAttribute('aria-label', I18N[state.uiLang]?.saveWord || '단어 저장');
                 saveButton.setAttribute('title', I18N[state.uiLang]?.saveWord || '단어 저장');
+                saveButton.onmouseover = function() { this.style.color = 'var(--accent-primary)'; };
+                saveButton.onmouseout = function() { this.style.color = 'var(--accent-secondary)'; };
                 const saveIcon = document.createElement('i');
 
                 // 저장 상태 확인하여 아이콘 설정
@@ -595,10 +728,12 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
                 if (isWordSaved) {
                     // 저장된 단어: 채워진 아이콘
-                    saveIcon.className = 'fas fa-bookmark text-xs text-yellow-400';
+                    saveIcon.className = 'fas fa-bookmark text-xs';
+                    saveIcon.style.color = 'var(--accent-primary)';
                 } else {
                     // 저장되지 않은 단어: 빈 아이콘
-                    saveIcon.className = 'far fa-bookmark text-xs text-gray-400';
+                    saveIcon.className = 'far fa-bookmark text-xs';
+                    saveIcon.style.color = 'var(--text-tertiary)';
                 }
 
                 saveIcon.setAttribute('aria-hidden', 'true');
@@ -610,21 +745,39 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
                     const cacheKey = `${item.word}_${wordLangForSave}`;
                     const wasSaved = savedWordsMap.get(cacheKey) || false;
 
-                    if (wasSaved) {
-                        // 이미 저장된 단어는 삭제 (선택사항 - 현재는 저장만 지원)
-                        // 필요시 삭제 기능 추가 가능
-                        showToast(I18N[state.uiLang]?.wordAlreadyExists || '이미 저장된 단어입니다.');
-                    } else {
-                        await saveWordToVocabulary({
-                            word: item.word,
-                            meaning: item.meaning,
-                            pronunciation: item.pronunciation || null,
-                            language: wordLangForSave
-                        }, saveButton, saveIcon);
+                    const result = await saveWordToVocabulary({
+                        word: item.word,
+                        meaning: item.meaning,
+                        pronunciation: item.pronunciation || null,
+                        language: wordLangForSave
+                    }, saveButton, saveIcon);
 
-                        // 저장 후 아이콘 업데이트
-                        saveIcon.className = 'fas fa-bookmark text-xs text-yellow-400';
-                        savedWordsMap.set(cacheKey, true);
+                    // DB 작업 완료 후 토스트 메시지 표시
+                    if (result.success) {
+                        if (result.action === 'delete') {
+                            showToast(I18N[state.uiLang]?.wordDeleted || '단어가 삭제되었습니다.');
+                        } else if (result.action === 'save') {
+                            showToast(I18N[state.uiLang]?.wordSaved || '단어가 저장되었습니다.');
+                        }
+                    } else {
+                        showToast(result.error || '작업에 실패했습니다.');
+                    }
+
+                    // 캐시 새로고침하여 상태 업데이트 후 아이콘 갱신
+                    savedWordsCache.delete(wordLangForSave);
+                    const updatedSavedWords = await getSavedWords(wordLangForSave); // Set
+                    savedWordsMap.clear();
+                    updatedSavedWords.forEach(word => {
+                        savedWordsMap.set(`${word}_${wordLangForSave}`, true);
+                    });
+
+                    const isNowSaved = updatedSavedWords.has(item.word);
+                    if (isNowSaved) {
+                        saveIcon.className = 'fas fa-bookmark text-xs';
+                        saveIcon.style.color = 'var(--accent-primary)';
+                    } else {
+                        saveIcon.className = 'far fa-bookmark text-xs';
+                        saveIcon.style.color = 'var(--text-tertiary)';
                     }
                 });
 
@@ -635,9 +788,10 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
 
             // Meaning div
             const meaningDiv = document.createElement('div');
-            meaningDiv.className = 'text-gray-300 text-xs mb-1';
+            meaningDiv.className = 'text-xs mb-1';
+            meaningDiv.style.color = 'var(--text-secondary)';
             const meaningLabel = document.createElement('span');
-            meaningLabel.className = 'text-gray-500';
+            meaningLabel.style.color = 'var(--text-tertiary)';
             const meaningLabelText = I18N[state.uiLang]?.meaning || '의미';
             safeSetText(meaningLabel, `${meaningLabelText}: `);
             const meaningText = document.createTextNode(item.meaning || '');
@@ -651,11 +805,12 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
             // Example div (if exists)
             if (item.example) {
                 const exampleDiv = document.createElement('div');
-                exampleDiv.className = 'flex items-start gap-2 text-gray-400 text-xs italic mt-1';
+                exampleDiv.className = 'flex items-start gap-2 text-xs italic mt-1';
+                exampleDiv.style.color = 'var(--text-tertiary)';
                 const exampleContentDiv = document.createElement('div');
                 exampleContentDiv.className = 'flex-1';
                 const exampleLabel = document.createElement('span');
-                exampleLabel.className = 'text-gray-500';
+                exampleLabel.style.color = 'var(--text-tertiary)';
                 const exampleLabelText = I18N[state.uiLang]?.example || '예문';
                 safeSetText(exampleLabel, `${exampleLabelText}: `);
                 const exampleText = document.createTextNode(item.example);
@@ -667,7 +822,10 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
                 const originalExampleText = extractOriginalTextFromExample(item.example);
                 if (originalExampleText) {
                     const exampleTTSButton = document.createElement('button');
-                    exampleTTSButton.className = 'text-blue-400 hover:text-blue-300 transition flex-shrink-0 mt-0.5';
+                    exampleTTSButton.className = 'transition flex-shrink-0 mt-0.5';
+                    exampleTTSButton.style.color = 'var(--accent-primary)';
+                    exampleTTSButton.onmouseover = function() { this.style.color = 'var(--accent-hover)'; };
+                    exampleTTSButton.onmouseout = function() { this.style.color = 'var(--accent-primary)'; };
                     exampleTTSButton.setAttribute('aria-label', I18N[state.uiLang]?.ttsPlay || '음성 재생');
                     exampleTTSButton.setAttribute('title', I18N[state.uiLang]?.ttsPlay || '음성 재생');
                     const exampleTTSIcon = document.createElement('i');
@@ -702,6 +860,217 @@ async function displayWordGuide(wordGuide, detectedSource, targetLang) {
     if (toggleText && I18N[state.uiLang]?.wordGuide) {
         safeSetText(toggleText, I18N[state.uiLang].wordGuide);
     }
+}
+
+// -------------------------
+// Realtime UI Rendering
+// -------------------------
+
+function updateRealtimeLangButtons() {
+    const sourceBtns = document.querySelectorAll('.rt-source');
+    const targetBtns = document.querySelectorAll('.rt-target');
+    sourceBtns.forEach(btn => {
+        const lang = btn.getAttribute('data-rt-lang');
+        const active = lang === state.realtimeSourceLang;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    targetBtns.forEach(btn => {
+        const lang = btn.getAttribute('data-rt-lang');
+        const active = lang === state.realtimeTargetLang;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function setRealtimeLoading(isLoading) {
+    const loading = document.getElementById('rt-loading');
+    if (loading) loading.classList.toggle('hidden', !isLoading);
+}
+
+function renderRealtimeOutput() {
+    const outEl = document.getElementById('rt-output');
+    const detectEl = document.getElementById('rt-detected');
+    if (outEl) safeSetText(outEl, state.realtimeResult || '');
+    if (detectEl) {
+        if (state.realtimeDetectedSource) {
+            detectEl.classList.remove('hidden');
+            safeSetText(detectEl, (state.realtimeDetectedSource || '').toUpperCase());
+        } else {
+            detectEl.classList.add('hidden');
+        }
+    }
+}
+
+async function renderRealtimeWordGuide(list, containerId, detectedSource, targetLang) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!list || !list.length) {
+        const empty = document.createElement('div');
+        empty.className = 'text-sm';
+        empty.style.color = 'var(--text-tertiary)';
+        empty.textContent = I18N[state.uiLang]?.noWords || '단어가 없습니다.';
+        container.appendChild(empty);
+        return;
+    }
+
+    const savedStatuses = await Promise.all(list.map(async (item) => {
+        const wLang = determineWordLanguage(item, detectedSource, targetLang);
+        const saved = await getSavedWords(wLang);
+        return { key: item.word, lang: wLang, isSaved: saved.has(item.word) };
+    }));
+    const savedMap = new Map();
+    savedStatuses.forEach(s => savedMap.set(`${s.key}_${s.lang}`, s.isSaved));
+
+    list.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'p-2 rounded-lg';
+        card.style.border = '1px solid var(--border-color)';
+        card.style.background = 'var(--bg-secondary)';
+
+        const top = document.createElement('div');
+        top.className = 'flex items-center gap-2 mb-1';
+
+        const wordSpan = document.createElement('span');
+        wordSpan.className = 'font-bold text-sm';
+        wordSpan.style.color = 'var(--text-primary)';
+        safeSetText(wordSpan, `${idx + 1}. ${item.word || ''}`);
+        top.appendChild(wordSpan);
+
+        if (item.pronunciation) {
+            const pron = document.createElement('span');
+            pron.className = 'text-xs';
+            pron.style.color = 'var(--accent-primary)';
+            safeSetText(pron, item.pronunciation);
+            top.appendChild(pron);
+        }
+
+        const btnWrap = document.createElement('div');
+        btnWrap.className = 'flex gap-2 ml-auto';
+
+        const langForItem = determineWordLanguage(item, detectedSource, targetLang);
+
+        const ttsBtn = document.createElement('button');
+        ttsBtn.className = 'transition';
+        ttsBtn.style.color = 'var(--accent-primary)';
+        ttsBtn.innerHTML = '<i class="fas fa-volume-high text-xs"></i>';
+        ttsBtn.onclick = () => playTTS(item.word, langForItem);
+        btnWrap.appendChild(ttsBtn);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'transition';
+        copyBtn.style.color = 'var(--text-tertiary)';
+        copyBtn.innerHTML = '<i class="far fa-copy text-xs"></i>';
+        copyBtn.onclick = () => copyText(item.word);
+        btnWrap.appendChild(copyBtn);
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'transition';
+        const cacheKey = `${item.word}_${langForItem}`;
+        const isSaved = savedMap.get(cacheKey) || false;
+        saveBtn.innerHTML = isSaved
+            ? '<i class="fas fa-bookmark text-xs" style="color: var(--accent-primary);"></i>'
+            : '<i class="far fa-bookmark text-xs" style="color: var(--text-tertiary);"></i>';
+        saveBtn.onclick = async () => {
+            const result = await saveWordToVocabulary({
+                word: item.word,
+                meaning: item.meaning,
+                pronunciation: item.pronunciation || null,
+                language: langForItem
+            });
+            // 저장/삭제 후 캐시 갱신
+            savedWordsCache.delete(langForItem);
+            const refreshed = await getSavedWords(langForItem);
+            const nowSaved = refreshed.has(item.word);
+            saveBtn.innerHTML = nowSaved
+                ? '<i class="fas fa-bookmark text-xs" style="color: var(--accent-primary);"></i>'
+                : '<i class="far fa-bookmark text-xs" style="color: var(--text-tertiary);"></i>';
+        };
+        btnWrap.appendChild(saveBtn);
+
+        top.appendChild(btnWrap);
+        card.appendChild(top);
+
+        if (item.meaning) {
+            const meaning = document.createElement('div');
+            meaning.className = 'text-xs mb-1';
+            meaning.style.color = 'var(--text-secondary)';
+            meaning.textContent = `의미: ${item.meaning}`;
+            card.appendChild(meaning);
+        }
+        if (item.example) {
+            const ex = document.createElement('div');
+            ex.className = 'text-xs';
+            ex.style.color = 'var(--text-tertiary)';
+            ex.textContent = `예문: ${item.example}`;
+            card.appendChild(ex);
+        }
+
+        container.appendChild(card);
+    });
+}
+
+function renderRealtimeWordGuides() {
+    renderRealtimeWordGuide(
+        state.realtimeWordGuideSource,
+        'rt-word-guide-source',
+        state.realtimeDetectedSource || state.realtimeSourceLang,
+        state.realtimeSourceLang
+    );
+    renderRealtimeWordGuide(
+        state.realtimeWordGuideTarget,
+        'rt-word-guide-target',
+        state.realtimeTargetLang,
+        state.realtimeTargetLang
+    );
+
+    const sourceCount = document.getElementById('rt-source-count');
+    const targetCount = document.getElementById('rt-target-count');
+    if (sourceCount) sourceCount.textContent = state.realtimeWordGuideSource?.length ? `${state.realtimeWordGuideSource.length}개` : '';
+    if (targetCount) targetCount.textContent = state.realtimeWordGuideTarget?.length ? `${state.realtimeWordGuideTarget.length}개` : '';
+}
+
+/**
+ * 실시간 번역 UI 초기화
+ */
+function initRealtimeUI() {
+    const inputEl = document.getElementById('rt-input');
+    const swapBtn = document.getElementById('rt-swap-btn');
+    const inputCopy = document.getElementById('rt-input-copy');
+    const inputTTS = document.getElementById('rt-input-tts');
+    const inputClear = document.getElementById('rt-input-clear');
+    const outputCopy = document.getElementById('rt-output-copy');
+    const outputTTS = document.getElementById('rt-output-tts');
+
+    document.querySelectorAll('.rt-source').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-rt-lang');
+            setRealtimeSourceLang(lang);
+        });
+    });
+    document.querySelectorAll('.rt-target').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-rt-lang');
+            setRealtimeTargetLang(lang);
+        });
+    });
+    if (swapBtn) swapBtn.addEventListener('click', swapRealtimeLang);
+
+    if (inputEl) {
+        inputEl.addEventListener('input', (e) => handleRealtimeInput(e.target.value));
+    }
+    if (inputCopy) inputCopy.addEventListener('click', () => copyText(state.realtimeText));
+    if (inputTTS) inputTTS.addEventListener('click', () => playTTS(state.realtimeText, state.realtimeSourceLang === 'auto' ? 'ko' : state.realtimeSourceLang));
+    if (inputClear) inputClear.addEventListener('click', () => {
+        if (inputEl) inputEl.value = '';
+        handleRealtimeInput('');
+    });
+    if (outputCopy) outputCopy.addEventListener('click', () => copyText(state.realtimeResult));
+    if (outputTTS) outputTTS.addEventListener('click', () => playTTS(state.realtimeResult, state.realtimeTargetLang));
+
+    updateRealtimeLangButtons();
 }
 
 /**
@@ -792,7 +1161,7 @@ function init() {
         }
 
         try {
-            setActiveBtn('nuance-group', 'polite', 'border-blue-500', 'text-white', 'bg-blue-900/20');
+            setActiveBtn('nuance-group', 'polite');
         } catch (error) {
             console.error('init: Error setting active button:', error);
         }
@@ -802,6 +1171,45 @@ function init() {
             setUILang('ko');
         } catch (error) {
             console.error('init: Error setting UI language:', error);
+        }
+
+        // 실시간 번역 UI 초기화
+        try {
+            initRealtimeUI();
+        } catch (error) {
+            console.error('init: Error initializing realtime UI:', error);
+        }
+
+        // 언어/톤 모달 트리거
+        try {
+            const srcBtn = document.getElementById('source-trigger');
+            const tgtBtn = document.getElementById('target-trigger');
+            const toneBtn = document.getElementById('tone-trigger');
+            if (srcBtn) srcBtn.addEventListener('click', (e) => openSelectorModal('source', e.currentTarget));
+            if (tgtBtn) tgtBtn.addEventListener('click', (e) => openSelectorModal('target', e.currentTarget));
+            if (toneBtn) toneBtn.addEventListener('click', (e) => openSelectorModal('tone', e.currentTarget));
+            updateLangToneLabels();
+        } catch (error) {
+            console.error('init: Error binding selector modal triggers:', error);
+        }
+
+        // 모달 닫기 (배경, ESC)
+        try {
+            const backdrop = document.getElementById('selector-modal-backdrop');
+            const closeBtn = document.getElementById('selector-modal-close');
+            if (backdrop) {
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) closeSelectorModal();
+                });
+            }
+            if (closeBtn) closeBtn.addEventListener('click', closeSelectorModal);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && state.selectorModalOpen) {
+                    closeSelectorModal();
+                }
+            });
+        } catch (error) {
+            console.error('init: Error binding modal close handlers:', error);
         }
 
         // 키보드 단축키 설정 (Ctrl+Enter로 번역)
